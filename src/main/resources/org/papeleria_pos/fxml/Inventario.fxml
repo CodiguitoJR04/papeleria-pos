@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.papeleria_pos.controller.InventarioController"
+           styleClass="root inventario-root">
+
+    <BorderPane>
+        <top>
+            <VBox styleClass="view-top">
+                <HBox styleClass="content-header">
+                    <VBox styleClass="content-header-text">
+                        <Label text="Inventario" styleClass="content-title"/>
+                        <Label fx:id="lblSubtitulo"
+                               text="0 productos · 0 con stock bajo"
+                               styleClass="content-subtitle"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Registrar movimiento"
+                            styleClass="btn btn-ghost"
+                            onAction="#abrirMovimiento"/>
+                    <Button text="+ Nuevo producto"
+                            styleClass="btn btn-primary"
+                            onAction="#abrirNuevo"/>
+                </HBox>
+
+                <HBox styleClass="filters">
+                    <HBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <TextField fx:id="pSku"
+                                   promptText="SKU / Código de barras"
+                                   HBox.hgrow="ALWAYS"/>
+                        <Button text="🔫"
+                                styleClass="icon-btn"
+                                onAction="#activarEscaner"
+                                focusTraversable="false"/>
+                    </HBox>
+                    <ComboBox fx:id="cbCategoria"
+                              promptText="Todas las categorías"
+                              prefWidth="200"/>
+                    <ComboBox fx:id="cbProveedor"
+                              promptText="Todos los proveedores"
+                              prefWidth="200"/>
+                    <Button fx:id="chipStock"
+                            text="⚠ Stock bajo"
+                            styleClass="chip"
+                            onAction="#toggleStockBajo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+        </top>
+
+        <center>
+            <VBox styleClass="inventario-body">
+                <TableView fx:id="tabla" styleClass="table-view" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colNombre"       text="Producto"   prefWidth="240"/>
+                        <TableColumn fx:id="colSku"          text="SKU"        prefWidth="130"/>
+                        <TableColumn fx:id="colCategoria"    text="Categoría"  prefWidth="120"/>
+                        <TableColumn fx:id="colPrecioCompra" text="P. compra"  prefWidth="110"
+                                     style="-fx-alignment: CENTER-RIGHT;"/>
+                        <TableColumn fx:id="colPrecioVenta"  text="P. venta"   prefWidth="110"
+                                     style="-fx-alignment: CENTER-RIGHT;"/>
+                        <TableColumn fx:id="colMargen"       text="Margen"     prefWidth="130"
+                                     style="-fx-alignment: CENTER-RIGHT;"/>
+                        <TableColumn fx:id="colStock"        text="Stock"      prefWidth="100"
+                                     style="-fx-alignment: CENTER;"/>
+                        <TableColumn fx:id="colAcciones"     text=""           prefWidth="90"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="Sin productos que coincidan con los filtros."
+                               styleClass="content-subtitle"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+        </center>
+    </BorderPane>
+
+    <!-- ==================== MODAL: PRODUCTO ==================== -->
+    <StackPane fx:id="modalProducto"
+               styleClass="modal-backdrop"
+               visible="false"
+               managed="false">
+        <VBox styleClass="modal">
+            <HBox styleClass="modal-header">
+                <VBox styleClass="modal-header-text">
+                    <Label fx:id="modalTitulo"
+                           text="Nuevo producto"
+                           styleClass="modal-title"/>
+                    <Label text="Elige cómo registrar la entrada"
+                           styleClass="modal-sub"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✕"
+                        styleClass="modal-close"
+                        onAction="#cerrarModalProducto"/>
+            </HBox>
+
+            <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+                <VBox styleClass="modal-body">
+
+                    <!-- ============ TABS UNIDAD / LOTE ============ -->
+                    <HBox styleClass="tabs-form">
+                        <Button fx:id="tabUnidad"
+                                text="Por unidad"
+                                styleClass="tab-f active"
+                                onAction="#modoUnidad"
+                                maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="tabLote"
+                                text="Por lote"
+                                styleClass="tab-f"
+                                onAction="#modoLote"
+                                maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+
+                    <!-- ============ DATOS DEL PRODUCTO ============ -->
+                    <Label text="DATOS DEL PRODUCTO" styleClass="form-section-title"/>
+                    <GridPane hgap="14" vgap="14">
+                        <HBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <TextField fx:id="pSku"
+                                       promptText="SKU / Código de barras"
+                                       HBox.hgrow="ALWAYS"/>
+                            <Button text="🔫"
+                                    styleClass="icon-btn"
+                                    onAction="#activarEscaner"
+                                    focusTraversable="false"/>
+                        </HBox>
+                        <TextField fx:id="pNombre"
+                                   promptText="Nombre del producto"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="0"
+                                   prefWidth="260"/>
+
+                        <ComboBox fx:id="pCategoria"
+                                  promptText="Categoría"
+                                  GridPane.columnIndex="0" GridPane.rowIndex="1"
+                                  prefWidth="260"/>
+                        <ComboBox fx:id="pProveedor"
+                                  promptText="Proveedor"
+                                  GridPane.columnIndex="1" GridPane.rowIndex="1"
+                                  prefWidth="260"/>
+
+                        <TextField fx:id="pPrecioCompra"
+                                   promptText="Precio de compra"
+                                   GridPane.columnIndex="0" GridPane.rowIndex="2"
+                                   prefWidth="260"/>
+                        <TextField fx:id="pPrecioVenta"
+                                   promptText="Precio de venta"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="2"
+                                   prefWidth="260"/>
+                    </GridPane>
+
+                    <!-- ============ MARGEN ============ -->
+                    <HBox styleClass="margin-box">
+                        <Label text="Margen de utilidad" styleClass="label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="lblMargen" text="—" styleClass="value"/>
+                    </HBox>
+
+                    <!-- ============ FORM: POR UNIDAD ============ -->
+                    <VBox fx:id="formUnidad" styleClass="form-group">
+                        <Label text="STOCK INICIAL" styleClass="form-section-title"/>
+                        <GridPane hgap="14" vgap="14">
+                            <VBox styleClass="field-group-sm"
+                                  GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                <Label text="Unidades" styleClass="field-label"/>
+                                <TextField fx:id="uStock" promptText="0" prefWidth="260"/>
+                            </VBox>
+                            <VBox styleClass="field-group-sm"
+                                  GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                <Label text="Stock mínimo" styleClass="field-label"/>
+                                <TextField fx:id="uStockMin" text="5" prefWidth="260"/>
+                            </VBox>
+                        </GridPane>
+                    </VBox>
+
+                    <!-- ============ FORM: POR LOTE ============ -->
+                    <VBox fx:id="formLote"
+                          styleClass="form-group"
+                          visible="false" managed="false">
+                        <Label text="DATOS DEL LOTE" styleClass="form-section-title"/>
+                        <GridPane hgap="14" vgap="14">
+                            <TextField fx:id="lCantidad"
+                                       text="1"
+                                       promptText="Cantidad de lotes"
+                                       GridPane.columnIndex="0" GridPane.rowIndex="0"
+                                       prefWidth="260"/>
+                            <TextField fx:id="lPorLote"
+                                       promptText="Unidades por lote"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="0"
+                                       prefWidth="260"/>
+                            <TextField fx:id="lCostoLote"
+                                       promptText="Costo del lote (total)"
+                                       GridPane.columnIndex="0" GridPane.rowIndex="1"
+                                       prefWidth="260"/>
+                            <TextField fx:id="lStockMin"
+                                       text="5"
+                                       promptText="Stock mínimo"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="1"
+                                       prefWidth="260"/>
+                        </GridPane>
+
+                        <HBox styleClass="calc-panel">
+                            <VBox styleClass="calc-item" HBox.hgrow="ALWAYS">
+                                <Label text="STOCK TOTAL" styleClass="calc-label"/>
+                                <Label fx:id="calcStock" text="0 uds" styleClass="calc-value"/>
+                            </VBox>
+                            <VBox styleClass="calc-item" HBox.hgrow="ALWAYS">
+                                <Label text="COSTO POR UNIDAD" styleClass="calc-label"/>
+                                <Label fx:id="calcCosto" text="—" styleClass="calc-value"/>
+                            </VBox>
+                            <VBox styleClass="calc-item" HBox.hgrow="ALWAYS">
+                                <Label text="COSTO TOTAL" styleClass="calc-label"/>
+                                <Label fx:id="calcTotal" text="—" styleClass="calc-value"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+
+                </VBox>
+            </ScrollPane>
+
+            <HBox styleClass="modal-footer">
+                <Button text="Cancelar"
+                        styleClass="btn btn-ghost"
+                        onAction="#cerrarModalProducto"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button text="Guardar producto"
+                        styleClass="btn btn-primary"
+                        onAction="#guardarProducto"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+
+    <!-- ==================== MODAL: MOVIMIENTO ==================== -->
+    <StackPane fx:id="modalMovimiento"
+               styleClass="modal-backdrop"
+               visible="false"
+               managed="false">
+        <VBox styleClass="modal sm">
+            <HBox styleClass="modal-header">
+                <VBox styleClass="modal-header-text">
+                    <Label text="Registrar movimiento" styleClass="modal-title"/>
+                    <Label text="Entrada, merma o ajuste de inventario"
+                           styleClass="modal-sub"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✕"
+                        styleClass="modal-close"
+                        onAction="#cerrarModalMovimiento"/>
+            </HBox>
+
+            <VBox styleClass="modal-body">
+                <VBox styleClass="field-group">
+                    <Label text="Producto" styleClass="field-label"/>
+                    <ComboBox fx:id="mvProducto"
+                              maxWidth="Infinity"
+                              promptText="Selecciona producto…"/>
+                </VBox>
+                <VBox styleClass="field-group">
+                    <Label text="Cantidad" styleClass="field-label"/>
+                    <TextField fx:id="mvCantidad" promptText="0"/>
+                </VBox>
+                <VBox styleClass="field-group">
+                    <Label text="Motivo" styleClass="field-label"/>
+                    <TextArea fx:id="mvMotivo"
+                              promptText="Ej. Producto dañado, compra a proveedor…"
+                              prefRowCount="3"
+                              wrapText="true"/>
+                </VBox>
+            </VBox>
+
+            <HBox styleClass="modal-footer">
+                <Button text="Cancelar"
+                        styleClass="btn btn-ghost"
+                        onAction="#cerrarModalMovimiento"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button text="Aplicar"
+                        styleClass="btn btn-primary"
+                        onAction="#guardarMovimiento"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+
+            </HBox>
+        </VBox>
+    </StackPane>
+
+</StackPane>

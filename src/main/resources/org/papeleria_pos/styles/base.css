@@ -1,0 +1,34 @@
+/* ============================================================================
+   01-BASE · Tokens globales y tipografía (JavaFX CSS Compliant)
+   ============================================================================ */
+
+.root {
+    /* ---------- Colores ---------- */
+    -fx-color-bg:            #FAFAFA;
+    -fx-color-surface:       #FFFFFF;
+    -fx-color-border:        #E5E7EB;
+    -fx-color-border-strong: #D1D5DB;
+    -fx-color-text:          #111827;
+    -fx-color-text-muted:    #6B7280;
+    -fx-color-text-soft:     #9CA3AF;
+
+    -fx-color-primary:       #1E88E5;
+    -fx-color-primary-hover: #1565C0;
+
+    -fx-color-success:       #2E7D32;
+    -fx-color-success-bg:    #E8F5E9;
+    -fx-color-danger:        #E53935;
+    -fx-color-danger-bg:     #FFEBEE;
+    -fx-color-warning:       #F59E0B;
+    -fx-color-warning-bg:    #FFF8E1;
+    -fx-color-info-bg:       #E3F2FD;
+
+    /* ---------- Radios (SIN 'px' → JavaFX los usa como Number) ---------- */
+    -fx-radius-base: 8;
+    -fx-radius-sm:   6;
+
+    /* ---------- Base ---------- */
+    -fx-background-color: -fx-color-bg;
+    -fx-font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    -fx-font-size: 14px;
+}

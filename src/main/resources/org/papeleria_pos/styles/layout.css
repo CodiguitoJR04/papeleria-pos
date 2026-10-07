@@ -1,0 +1,136 @@
+/* ============================================================================
+   02-LAYOUT · Header, sidebar, content-header, filtros, scroll
+   ============================================================================ */
+
+/* ---------- Header superior ---------- */
+.header {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 20 0 20;
+    -fx-min-height: 56px;
+    -fx-pref-height: 56px;
+    -fx-max-height: 56px;
+    -fx-spacing: 24;
+    -fx-alignment: center-left;
+}
+.brand {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -fx-color-text;
+}
+.brand-dot {
+    -fx-background-color: -fx-color-primary;
+    -fx-background-radius: 4;
+    -fx-min-width: 8px;  -fx-pref-width: 8px;  -fx-max-width: 8px;
+    -fx-min-height: 8px; -fx-pref-height: 8px; -fx-max-height: 8px;
+}
+.brand-small {
+    -fx-font-size: 11px;
+    -fx-text-fill: -fx-color-text-soft;
+}
+.header-divider {
+    -fx-background-color: -fx-color-border;
+    -fx-min-width: 1px;  -fx-pref-width: 1px;  -fx-max-width: 1px;
+    -fx-min-height: 24px; -fx-pref-height: 24px; -fx-max-height: 24px;
+}
+.header-meta { -fx-spacing: 20; -fx-alignment: center-left; }
+.header-meta .label { -fx-text-fill: -fx-color-text-muted; -fx-font-size: 13px; }
+.header-meta .strong { -fx-text-fill: -fx-color-text; -fx-font-weight: 500; }
+
+/* ---------- Botón icono ---------- */
+.icon-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-min-width: 36px;  -fx-pref-width: 36px;  -fx-max-width: 36px;
+    -fx-min-height: 36px; -fx-pref-height: 36px; -fx-max-height: 36px;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.icon-btn:hover { -fx-background-color: -fx-color-bg; -fx-text-fill: -fx-color-text; }
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: transparent -fx-color-border transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 16 12 16 12;
+    -fx-spacing: 4;
+    -fx-min-width: 230px; -fx-pref-width: 230px; -fx-max-width: 230px;
+}
+.nav-section {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-soft;
+    -fx-padding: 16 12 6 12;
+}
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-padding: 0 12 0 12;
+    -fx-min-height: 40px; -fx-pref-height: 40px;
+    -fx-alignment: center-left;
+    -fx-spacing: 10;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.nav-item:hover { -fx-background-color: -fx-color-bg; -fx-text-fill: -fx-color-text; }
+.nav-item.active {
+    -fx-background-color: rgba(30,136,229,0.08);
+    -fx-text-fill: -fx-color-primary;
+    -fx-font-weight: 600;
+}
+.nav-count {
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: 9;
+    -fx-padding: 2 7 2 7;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-muted;
+}
+.nav-item.active .nav-count {
+    -fx-background-color: rgba(30,136,229,0.15);
+    -fx-text-fill: -fx-color-primary;
+}
+
+/* ---------- Cabecera de vista ---------- */
+.content-header {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 18 28 18 28;
+    -fx-spacing: 16;
+    -fx-alignment: center-left;
+}
+.content-title    { -fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: -fx-color-text; }
+.content-subtitle { -fx-font-size: 13px; -fx-text-fill: -fx-color-text-muted; }
+.content-header-text { -fx-spacing: 2; }
+
+/* ---------- Barra de filtros ---------- */
+.filters {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 14 28 14 28;
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+}
+
+/* ---------- Scroll ---------- */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+.scroll-pane .viewport { -fx-background-color: transparent; }
+.scroll-pane > .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 10px;
+}
+.scroll-pane > .scroll-bar:vertical .thumb {
+    -fx-background-color: -fx-color-border-strong;
+    -fx-background-radius: 5;
+}
+.view-top { -fx-spacing: 0; }

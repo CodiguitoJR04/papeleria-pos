@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.geometry.Insets?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.papeleria_pos.controller.LoginViewController"
+           >
+
+   <!-- Burbujas decorativas muy sutiles en el fondo -->
+   <Circle styleClass="login-bg-glow" radius="220" translateX="-320" translateY="-200"/>
+   <Circle styleClass="login-bg-glow" radius="160" translateX="360" translateY="240"/>
+
+   <VBox alignment="CENTER" spacing="0" maxWidth="440" maxHeight="600">
+
+      <!-- ============================================================
+           CARD
+           ============================================================ -->
+      <VBox fx:id="card" styleClass="login-card" alignment="TOP_CENTER">
+
+         <!-- ============ LOGO ============ -->
+         <StackPane styleClass="login-logo">
+            <Label text="P" styleClass="login-logo-text"/>
+         </StackPane>
+
+         <!-- ============ TÍTULOS ============ -->
+         <VBox alignment="CENTER" spacing="4">
+            <Label text="PAPELERÍA" styleClass="login-brand"/>
+            <Label text="Punto de Venta" styleClass="login-title"/>
+            <Label text="Ingresa tus credenciales para continuar" styleClass="login-subtitle"/>
+         </VBox>
+
+         <!-- Separación -->
+         <Region prefHeight="8"/>
+
+         <!-- ============ USUARIO ============ -->
+         <VBox spacing="0">
+            <Label text="Usuario" styleClass="login-field-label"/>
+            <TextField fx:id="txtUsuario"
+                       styleClass="login-field"
+                       promptText="tu.usuario"
+                       onAction="#ingresar"/>
+         </VBox>
+
+         <!-- ============ CONTRASEÑA ============ -->
+         <VBox spacing="0">
+            <Label text="Contraseña" styleClass="login-field-label"/>
+            <HBox styleClass="login-password-wrap" alignment="CENTER_LEFT">
+               <PasswordField fx:id="txtPassword"
+                              promptText="••••••••"
+                              HBox.hgrow="ALWAYS"
+                              onAction="#ingresar"/>
+               <TextField fx:id="txtPasswordVisible"
+                          promptText="••••••••"
+                          visible="false"
+                          managed="false"
+                          HBox.hgrow="ALWAYS"
+                          onAction="#ingresar"/>
+               <Button fx:id="btnOjo"
+                       text="👁"
+                       styleClass="login-eye-btn"
+                       onAction="#togglePassword"/>
+            </HBox>
+         </VBox>
+
+         <!-- ============ ERROR (oculto por defecto) ============ -->
+         <Label fx:id="lblError"
+                styleClass="login-error"
+                text="Usuario o contraseña incorrectos"
+                visible="false"
+                managed="false"
+                maxWidth="Infinity"
+                wrapText="true"/>
+
+         <!-- ============ BOTÓN ============ -->
+         <Button fx:id="btnIngresar"
+                 text="Ingresar"
+                 styleClass="login-btn"
+                 onAction="#ingresar"
+                 defaultButton="true"
+                 maxWidth="Infinity"/>
+
+         <!-- ============ HINT PARA PROBAR ============ -->
+         <Label styleClass="login-hint" maxWidth="Infinity" wrapText="true">
+            <text>Prueba: admin / admin  o  cajero / cajero</text>
+         </Label>
+
+      </VBox>
+
+      <!-- ============ FOOTER ============ -->
+      <Label text="Papelería POS · v1.0 · 2026" styleClass="login-footer"/>
+
+   </VBox>
+</StackPane>

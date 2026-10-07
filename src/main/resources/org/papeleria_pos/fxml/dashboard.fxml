@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<?import java.net.URL?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.papeleria_pos.controller.DashboardController"
+            styleClass="root dashboard-root">
+
+
+    <top>
+        <HBox styleClass="content-header">
+            <VBox styleClass="content-header-text" spacing="2">
+                <Label text="Dashboard" styleClass="content-title"/>
+                <Label fx:id="lblFecha" text="Resumen operativo · Hoy"
+                       styleClass="content-subtitle"/>
+            </VBox>
+        </HBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="dashboard-scroll">
+            <VBox styleClass="dashboard-body">
+
+                <!-- FILA 1: KPIs -->
+                <HBox styleClass="kpi-row">
+
+                    <VBox styleClass="kpi" HBox.hgrow="ALWAYS">
+                        <Label text="VENTAS HOY" styleClass="kpi-label"/>
+                        <Label fx:id="kpiVentas" text="…" styleClass="kpi-value"/>
+                        <Label fx:id="lblDeltaVentas" text="—" styleClass="kpi-delta-up"/>
+                    </VBox>
+
+                    <VBox styleClass="kpi" HBox.hgrow="ALWAYS">
+                        <Label text="TICKET PROMEDIO" styleClass="kpi-label"/>
+                        <Label fx:id="kpiTicket" text="…" styleClass="kpi-value"/>
+                        <Label fx:id="lblDeltaTicket" text="—" styleClass="kpi-delta-down"/>
+                    </VBox>
+
+                    <VBox styleClass="kpi" HBox.hgrow="ALWAYS">
+                        <Label text="PRODUCTOS STOCK BAJO" styleClass="kpi-label"/>
+                        <Label fx:id="kpiStockBajo" text="…" styleClass="kpi-value"/>
+                        <Label text="Requieren reposición"
+                               styleClass="kpi-delta-vs kpi-warn"/>
+                    </VBox>
+
+                    <VBox styleClass="kpi" HBox.hgrow="ALWAYS">
+                        <Label text="TURNOS ABIERTOS" styleClass="kpi-label"/>
+                        <Label fx:id="kpiTurnos" text="…" styleClass="kpi-value"/>
+                        <Label text="Cajas activas ahora" styleClass="kpi-delta-vs"/>
+                    </VBox>
+
+                </HBox>
+
+                <!-- FILA 2: gráfica + top productos -->
+                <HBox styleClass="card-row">
+
+                    <VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="14">
+                        <VBox styleClass="card-header-text" spacing="2">
+                            <Label text="Ventas últimos 7 días" styleClass="card-title"/>
+                            <Label text="Total facturado por día" styleClass="card-sub"/>
+                        </VBox>
+                        <BarChart fx:id="chartVentas"
+                                  prefHeight="240"
+                                  animated="false"
+                                  legendVisible="false"
+                                  horizontalGridLinesVisible="true"
+                                  verticalGridLinesVisible="false"
+                                  styleClass="chart-ventas">
+                            <xAxis><CategoryAxis tickLabelRotation="0"/></xAxis>
+                            <yAxis><NumberAxis forceZeroInRange="true"/></yAxis>
+                        </BarChart>
+                    </VBox>
+
+                    <VBox styleClass="card" prefWidth="340" minWidth="300" spacing="14">
+                        <VBox styleClass="card-header-text" spacing="2">
+                            <Label text="Top 5 productos" styleClass="card-title"/>
+                            <Label text="Por unidades vendidas" styleClass="card-sub"/>
+                        </VBox>
+                        <VBox fx:id="topProductos" styleClass="top-list"/>
+                    </VBox>
+
+                </HBox>
+
+                <!-- FILA 3: últimas ventas + alertas -->
+                <HBox styleClass="card-row">
+
+                    <VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="12">
+                        <HBox styleClass="card-header-row" alignment="CENTER_LEFT">
+                            <VBox styleClass="card-header-text" spacing="2">
+                                <Label text="Últimas ventas" styleClass="card-title"/>
+                                <Label text="Actividad reciente en caja" styleClass="card-sub"/>
+                            </VBox>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label text="Ver todas →"
+                                   styleClass="card-sub card-link"
+                                   onMouseClicked="#irAReportes"/>
+                        </HBox>
+                        <VBox fx:id="ultimasVentas" styleClass="simple-list"/>
+                    </VBox>
+
+                    <VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="12">
+                        <HBox styleClass="card-header-row" alignment="CENTER_LEFT">
+                            <VBox styleClass="card-header-text" spacing="2">
+                                <Label text="Alertas de stock" styleClass="card-title"/>
+                                <Label text="Productos que requieren atención" styleClass="card-sub"/>
+                            </VBox>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label text="Ir a inventario →"
+                                   styleClass="card-sub card-link"
+                                   onMouseClicked="#irAInventario"/>
+                        </HBox>
+                        <VBox fx:id="alertasStock" styleClass="simple-list"/>
+                    </VBox>
+
+                </HBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

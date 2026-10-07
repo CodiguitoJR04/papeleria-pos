@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.papeleria_pos.controller.UsuariosController"
+           styleClass="root usuarios-root">
+
+    <BorderPane>
+        <top>
+            <VBox styleClass="view-top">
+                <HBox styleClass="content-header">
+                    <VBox styleClass="content-header-text">
+                        <Label text="Usuarios" styleClass="content-title"/>
+                        <Label fx:id="lblSubtitulo"
+                               text="0 usuarios · 0 activos"
+                               styleClass="content-subtitle"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Nuevo usuario"
+                            styleClass="btn btn-primary"
+                            onAction="#abrirNuevo"/>
+                </HBox>
+
+                <HBox styleClass="filters">
+                    <TextField fx:id="txtBuscar"
+                               promptText="Buscar por nombre o usuario…"
+                               prefWidth="380"/>
+                    <ComboBox fx:id="cbRol"    promptText="Todos los roles"   prefWidth="180"/>
+                    <ComboBox fx:id="cbEstado" promptText="Todos los estados" prefWidth="180"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+        </top>
+
+        <center>
+            <VBox styleClass="usuarios-body">
+                <TableView fx:id="tabla" styleClass="table-view" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colNombre"       text="Usuario"       prefWidth="300"/>
+                        <TableColumn fx:id="colRol"          text="Rol"           prefWidth="150"/>
+                        <TableColumn fx:id="colUltimoAcceso" text="Último acceso" prefWidth="200"/>
+                        <TableColumn fx:id="colVentasHoy"    text="Ventas hoy"    prefWidth="110"
+                                     style="-fx-alignment: CENTER-RIGHT;"/>
+                        <TableColumn fx:id="colEstado"       text="Estado"        prefWidth="120"
+                                     style="-fx-alignment: CENTER;"/>
+                        <TableColumn fx:id="colAcciones"     text=""              prefWidth="90"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="Sin usuarios que coincidan con los filtros."
+                               styleClass="content-subtitle"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+        </center>
+    </BorderPane>
+
+    <!-- ==================== MODAL: NUEVO / EDITAR ==================== -->
+    <StackPane fx:id="modalUsuario"
+               styleClass="modal-backdrop"
+               visible="false"
+               managed="false">
+        <VBox styleClass="modal sm">
+            <HBox styleClass="modal-header">
+                <VBox styleClass="modal-header-text">
+                    <Label fx:id="modalTitulo"
+                           text="Nuevo usuario"
+                           styleClass="modal-title"/>
+                    <Label text="El rol define los permisos del sistema"
+                           styleClass="modal-sub"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✕" styleClass="modal-close" onAction="#cerrarModal"/>
+            </HBox>
+
+            <VBox styleClass="modal-body">
+                <VBox styleClass="field-group">
+                    <Label text="Nombre completo" styleClass="field-label"/>
+                    <TextField fx:id="usrNombre" promptText="Ana López Ramírez"/>
+                </VBox>
+
+                <HBox styleClass="form-row">
+                    <VBox styleClass="field-group" HBox.hgrow="ALWAYS">
+                        <Label text="Usuario" styleClass="field-label"/>
+                        <TextField fx:id="usrUsername" promptText="ana.lopez"/>
+                    </VBox>
+                    <VBox styleClass="field-group" HBox.hgrow="ALWAYS">
+                        <Label text="Contraseña" styleClass="field-label"/>
+                        <PasswordField fx:id="usrPassword" promptText="••••••••"/>
+                    </VBox>
+                </HBox>
+
+                <HBox styleClass="form-row">
+                    <VBox styleClass="field-group" HBox.hgrow="ALWAYS">
+                        <Label text="Rol" styleClass="field-label"/>
+                        <ComboBox fx:id="usrRol"    maxWidth="Infinity" promptText="Rol"/>
+                    </VBox>
+                    <VBox styleClass="field-group" HBox.hgrow="ALWAYS">
+                        <Label text="Estado" styleClass="field-label"/>
+                        <ComboBox fx:id="usrEstado" maxWidth="Infinity" promptText="Estado"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <HBox styleClass="modal-footer">
+                <Button text="Cancelar" styleClass="btn btn-ghost"
+                        onAction="#cerrarModal"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button text="Guardar" styleClass="btn btn-primary"
+                        onAction="#guardar"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+</StackPane>

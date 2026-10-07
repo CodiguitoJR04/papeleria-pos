@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.papeleria_pos.controller.PuntoDeVentaController"
+           styleClass="root pos-root">
+
+    <BorderPane>
+
+        <!-- ============ HEADER ============ -->
+        <top>
+            <HBox styleClass="header">
+                <HBox styleClass="brand" alignment="CENTER_LEFT" spacing="8">
+                    <Region styleClass="brand-dot"/>
+                    <Label text="Papelería" styleClass="brand"/>
+                </HBox>
+                <Region styleClass="header-divider"/>
+                <HBox styleClass="header-meta" spacing="20">
+                    <Label text="Turno "/>
+                    <Label fx:id="lblTurno" text="#—" styleClass="strong"/>
+                    <Label text="Caja "/>
+                    <Label fx:id="lblCaja" text="—" styleClass="strong"/>
+                    <Label fx:id="lblCajero" text="—" styleClass="strong"/>
+                </HBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblReloj" text="--:--"/>
+                <Button text="⎋"
+                        styleClass="icon-btn"
+                        focusTraversable="false"
+                        onAction="#cerrarSesion"/>
+            </HBox>
+        </top>
+
+        <!-- ============ CUERPO ============ -->
+        <center>
+            <HBox styleClass="pos-body">
+
+                <!-- ============ COLUMNA IZQUIERDA: CARRITO ============ -->
+                <VBox styleClass="pos-cart-panel" HBox.hgrow="ALWAYS">
+
+                    <HBox styleClass="pos-search-bar">
+                        <TextField fx:id="txtEscaner"
+                                   promptText="Escanea o busca producto…"
+                                   styleClass="pos-search-field"
+                                   HBox.hgrow="ALWAYS"/>
+                        <Button text="F2 · Buscar"
+                                styleClass="pos-hint-btn"
+                                focusTraversable="false"
+                                onAction="#enfocarEscaner"/>
+                    </HBox>
+
+                    <TableView fx:id="tablaCarrito"
+                               styleClass="table-view pos-cart-table"
+                               VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colItemNombre"   text="Producto"  prefWidth="240"/>
+                            <TableColumn fx:id="colItemCantidad" text="Cant."     prefWidth="80"
+                                         style="-fx-alignment: CENTER;"/>
+                            <TableColumn fx:id="colItemPrecio"   text="P. unit."  prefWidth="110"
+                                         style="-fx-alignment: CENTER-RIGHT;"/>
+                            <TableColumn fx:id="colItemImporte"  text="Importe"   prefWidth="120"
+                                         style="-fx-alignment: CENTER-RIGHT;"/>
+                            <TableColumn fx:id="colItemAcciones" text=""          prefWidth="60"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="Escanea un producto o búscalo para empezar"
+                                   styleClass="content-subtitle"/>
+                        </placeholder>
+                    </TableView>
+
+                </VBox>
+
+                <!-- ============ COLUMNA DERECHA: TOTALES ============ -->
+                <VBox styleClass="pos-total-panel">
+
+                    <VBox spacing="4">
+                        <Label text="TOTAL" styleClass="pos-total-header"/>
+                        <Label fx:id="lblTotal" text="0.00" styleClass="pos-total-amount"/>
+                    </VBox>
+
+                    <VBox styleClass="pos-totals-breakdown">
+                        <HBox styleClass="pos-totals-row">
+                            <Label text="Artículos"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblArticulos" text="0"/>
+                        </HBox>
+                        <HBox styleClass="pos-totals-row">
+                            <Label text="Subtotal"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblSubtotal" text="0.00"/>
+                        </HBox>
+                        <HBox styleClass="pos-totals-row">
+                            <Label text="IVA 16%"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblIva" text="0.00"/>
+                        </HBox>
+                    </VBox>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+
+                    <Button fx:id="btnCobrar"
+                            text="COBRAR   (F12)"
+                            styleClass="pos-btn-cobrar"
+                            maxWidth="Infinity"
+                            onAction="#abrirCobro"/>
+
+                    <HBox spacing="10" styleClass="pos-secondary-actions">
+                        <Button fx:id="btnDescuento"
+                                text="Descuento"
+                                styleClass="pos-btn-secondary"
+                                maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                                onAction="#aplicarDescuento"/>
+                        <Button fx:id="btnCancelar"
+                                text="Cancelar"
+                                styleClass="pos-btn-secondary pos-btn-danger"
+                                maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                                onAction="#cancelarVenta"/>
+                    </HBox>
+
+                </VBox>
+
+            </HBox>
+        </center>
+
+        <!-- ============ FOOTER: ATAJOS ============ -->
+        <bottom>
+            <HBox styleClass="shortcuts-bar">
+                <HBox styleClass="shortcut-item" spacing="6">
+                    <Label text="F2" styleClass="kbd"/>
+                    <Label text="Buscar"/>
+                </HBox>
+                <HBox styleClass="shortcut-item" spacing="6">
+                    <Label text="F4" styleClass="kbd"/>
+                    <Label text="Descuento"/>
+                </HBox>
+                <HBox styleClass="shortcut-item" spacing="6">
+                    <Label text="F8" styleClass="kbd"/>
+                    <Label text="Cancelar"/>
+                </HBox>
+                <HBox styleClass="shortcut-item" spacing="6">
+                    <Label text="F12" styleClass="kbd"/>
+                    <Label text="Cobrar"/>
+                </HBox>
+            </HBox>
+        </bottom>
+
+    </BorderPane>
+
+    <!-- ============ MODAL COBRO ============ -->
+    <StackPane fx:id="modalCobro"
+               styleClass="modal-backdrop"
+               visible="false"
+               managed="false">
+        <VBox styleClass="modal pos-modal-pay">
+            <HBox styleClass="modal-header">
+                <VBox styleClass="modal-header-text">
+                    <Label text="Cobrar venta" styleClass="modal-title"/>
+                    <Label text="Confirma el método y el monto recibido"
+                           styleClass="modal-sub"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✕" styleClass="modal-close" onAction="#cerrarCobro"/>
+            </HBox>
+
+            <VBox styleClass="modal-body">
+
+                <HBox styleClass="pos-pay-total">
+                    <Label text="Total a pagar" styleClass="pos-pay-total-label"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblModalTotal" text="0.00" styleClass="pos-pay-total-value"/>
+                </HBox>
+
+                <VBox styleClass="field-group">
+                    <Label text="Método de pago" styleClass="field-label"/>
+                    <HBox spacing="8">
+                        <ToggleButton fx:id="tbEfectivo"
+                                      text="Efectivo"
+                                      styleClass="pos-method-btn"
+                                      maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                        <ToggleButton fx:id="tbTarjeta"
+                                      text="Tarjeta"
+                                      styleClass="pos-method-btn"
+                                      maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                        <ToggleButton fx:id="tbTransferencia"
+                                      text="Transfer."
+                                      styleClass="pos-method-btn"
+                                      maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+
+                <VBox styleClass="field-group">
+                    <Label text="Recibido" styleClass="field-label"/>
+                    <TextField fx:id="txtRecibido"
+                               styleClass="pos-input-money"
+                               onKeyReleased="#calcularCambio"
+                               promptText="0.00"/>
+                </VBox>
+
+                <HBox styleClass="pos-change-row">
+                    <Label text="Cambio"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblCambio" text="0.00" styleClass="pos-change-value"/>
+                </HBox>
+
+                <CheckBox fx:id="chkFacturar"
+                          text="Facturar (capturar datos fiscales)"
+                          styleClass="pos-checkbox"/>
+            </VBox>
+
+            <HBox styleClass="modal-footer">
+                <Button text="Cancelar"
+                        styleClass="btn btn-ghost"
+                        onAction="#cerrarCobro"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button text="Confirmar"
+                        styleClass="btn btn-primary"
+                        onAction="#confirmarCobro"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+    <StackPane fx:id="modalFactura"
+               styleClass="modal-backdrop"
+               visible="false"
+               managed="false">
+        <VBox styleClass="modal sm">
+            <HBox styleClass="modal-header">
+                <VBox styleClass="modal-header-text">
+                    <Label text="Datos de facturación" styleClass="modal-title"/>
+                    <Label text="CFDI 4.0 · los datos deben coincidir con el SAT"
+                           styleClass="modal-sub"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✕" styleClass="modal-close" onAction="#cerrarModalFactura"/>
+            </HBox>
+
+            <VBox styleClass="modal-body">
+
+                <HBox styleClass="pos-pay-total">
+                    <Label text="Total a facturar" styleClass="pos-pay-total-label"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblFacturaTotal" text="0.00" styleClass="pos-pay-total-value"/>
+                </HBox>
+
+                <VBox styleClass="field-group">
+                    <Label text="RFC" styleClass="field-label"/>
+                    <TextField fx:id="facRfc" promptText="XAXX010101000"/>
+                </VBox>
+
+                <VBox styleClass="field-group">
+                    <Label text="Razón social" styleClass="field-label"/>
+                    <TextField fx:id="facRazon" promptText="Público en general"/>
+                </VBox>
+
+                <VBox styleClass="field-group">
+                    <Label text="Régimen fiscal" styleClass="field-label"/>
+                    <ComboBox fx:id="facRegimen" maxWidth="Infinity"/>
+                </VBox>
+
+                <VBox styleClass="field-group">
+                    <Label text="Uso del CFDI" styleClass="field-label"/>
+                    <ComboBox fx:id="facUso" maxWidth="Infinity"/>
+                </VBox>
+
+                <VBox styleClass="field-group">
+                    <Label text="Método de pago" styleClass="field-label"/>
+                    <ComboBox fx:id="facMetodo" maxWidth="Infinity"/>
+                </VBox>
+
+            </VBox>
+
+            <HBox styleClass="modal-footer">
+                <Button text="Cancelar"
+                        styleClass="btn btn-ghost"
+                        onAction="#cerrarModalFactura"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button text="Generar factura"
+                        styleClass="btn btn-primary"
+                        onAction="#confirmarFactura"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+
+
+</StackPane>

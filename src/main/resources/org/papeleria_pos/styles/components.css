@@ -1,0 +1,348 @@
+/* ============================================================================
+   03-COMPONENTS · Botones, inputs, tablas, badges, cards, modales, tabs
+   ============================================================================ */
+
+/* ---------- Botones ---------- */
+.btn {
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 0 16 0 16;
+    -fx-min-height: 40px; -fx-pref-height: 40px;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+    -fx-border-width: 1px;
+    -fx-border-color: transparent;
+    -fx-border-radius: -fx-radius-base;
+}
+.btn-primary {
+    -fx-background-color: -fx-color-primary;
+    -fx-text-fill: white;
+}
+.btn-primary:hover    { -fx-background-color: -fx-color-primary-hover; }
+.btn-primary:disabled { -fx-background-color: -fx-color-border-strong; -fx-opacity: 1; }
+
+.btn-ghost {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-text-fill: -fx-color-text-muted;
+}
+.btn-ghost:hover { -fx-border-color: -fx-color-border-strong; -fx-text-fill: -fx-color-text; }
+
+.btn-danger { -fx-background-color: -fx-color-danger; -fx-text-fill: white; }
+.btn-danger:hover { -fx-background-color: derive(-fx-color-danger, -12%); }
+
+/* ---------- Inputs ---------- */
+.text-field {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-sm;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-padding: 0 12 0 12;
+    -fx-min-height: 38px; -fx-pref-height: 38px;
+    -fx-font-size: 13px;
+    -fx-text-fill: -fx-color-text;
+    -fx-prompt-text-fill: -fx-color-text-soft;
+}
+.text-field:focused {
+    -fx-border-color: -fx-color-primary;
+    -fx-effect: dropshadow(gaussian, rgba(30,136,229,0.20), 4, 0, 0, 0);
+}
+.combo-box {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-sm;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-padding: 0 12 0 12;
+    -fx-min-height: 38px; -fx-pref-height: 38px;
+    -fx-font-size: 13px;
+}
+.combo-box .list-cell { -fx-text-fill: -fx-color-text; -fx-padding: 0 4 0 0; }
+.combo-box:hover   { -fx-border-color: -fx-color-border-strong; }
+.combo-box:focused { -fx-border-color: -fx-color-primary; }
+.combo-box .arrow  { -fx-background-color: -fx-color-text-muted; }
+
+.chip {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-sm;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-padding: 0 14 0 14;
+    -fx-min-height: 38px; -fx-pref-height: 38px;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.chip:hover { -fx-text-fill: -fx-color-text; -fx-border-color: -fx-color-border-strong; }
+.chip.active {
+    -fx-background-color: -fx-color-warning-bg;
+    -fx-border-color: -fx-color-warning;
+    -fx-text-fill: #92400E;
+}
+
+/* ---------- KPIs ---------- */
+.kpi {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 16;
+    -fx-spacing: 8;
+}
+.kpi-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-soft;
+}
+.kpi-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -fx-color-text;
+}
+.kpi-delta-up   { -fx-font-size: 12px; -fx-text-fill: -fx-color-success; -fx-font-weight: 500; }
+.kpi-delta-down { -fx-font-size: 12px; -fx-text-fill: -fx-color-danger;  -fx-font-weight: 500; }
+.kpi-delta-vs   { -fx-font-size: 12px; -fx-text-fill: -fx-color-text-soft; }
+.kpi-warn       { -fx-text-fill: #B45309; }
+
+/* ---------- Cards ---------- */
+.card {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 18 20 18 20;
+}
+.card-title { -fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: -fx-color-text; }
+.card-sub   { -fx-font-size: 12px; -fx-text-fill: -fx-color-text-soft; }
+
+.card-header-text { -fx-spacing: 2; }
+.card-header-row  { -fx-alignment: center-left; -fx-spacing: 8; }
+.card-link {
+    -fx-text-fill: -fx-color-primary;
+    -fx-cursor: hand;
+}
+.card-link:hover { -fx-text-fill: -fx-color-primary-hover; }
+
+/* ---------- Tablas ---------- */
+.table-view {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 0;
+}
+.table-view .column-header-background {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-padding: 12 16 12 16;
+    -fx-border-color: transparent;
+}
+.table-view .column-header .label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-soft;
+    -fx-alignment: center-left;
+}
+.table-row-cell {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8 0 8 0;
+    -fx-cell-size: 46px;
+}
+.table-row-cell:hover    { -fx-background-color: #FAFBFC; }
+.table-row-cell:selected { -fx-background-color: rgba(30,136,229,0.08); }
+.table-row-cell:selected .text { -fx-fill: -fx-color-text; }
+.table-cell { -fx-padding: 4 16 4 16; -fx-font-size: 13px; -fx-text-fill: -fx-color-text; }
+
+/* ---------- Badges ---------- */
+.badge {
+    -fx-padding: 3 10 3 10;
+    -fx-background-radius: 999;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+}
+.badge.ok      { -fx-background-color: -fx-color-success-bg; -fx-text-fill: -fx-color-success; }
+.badge.low     { -fx-background-color: -fx-color-warning-bg; -fx-text-fill: #B45309; }
+.badge.out     { -fx-background-color: -fx-color-danger-bg;  -fx-text-fill: -fx-color-danger; }
+.badge.info    { -fx-background-color: -fx-color-info-bg;    -fx-text-fill: #1565C0; }
+.badge.neutral { -fx-background-color: -fx-color-bg;         -fx-text-fill: -fx-color-text-muted; }
+
+/* ---------- Modales ---------- */
+.modal-backdrop { -fx-background-color: rgba(17,24,39,0.45); }
+.modal {
+    -fx-background-color: -fx-color-surface;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(17,24,39,0.30), 40, 0, 0, 12);
+    -fx-max-width: 640px;
+    -fx-min-width: 420px;
+}
+.modal.sm { -fx-max-width: 480px; -fx-min-width: 380px; }
+.modal-header {
+    -fx-padding: 20 24 16 24;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-spacing: 16;
+}
+.modal-title { -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: -fx-color-text; }
+.modal-sub   { -fx-font-size: 12px; -fx-text-fill: -fx-color-text-muted; }
+.modal-close {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-min-width: 30px;  -fx-pref-width: 30px;  -fx-max-width: 30px;
+    -fx-min-height: 30px; -fx-pref-height: 30px; -fx-max-height: 30px;
+    -fx-font-size: 16px;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.modal-close:hover { -fx-background-color: -fx-color-bg; -fx-text-fill: -fx-color-text; }
+.modal-body   { -fx-padding: 20 24 20 24; -fx-spacing: 14; }
+.modal-footer {
+    -fx-padding: 16 24 16 24;
+    -fx-background-color: -fx-color-bg;
+    -fx-border-color: -fx-color-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-spacing: 10;
+}
+
+/* ---------- Tabs tipo form ---------- */
+.tabs-form {
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 4;
+    -fx-spacing: 4;
+}
+.tab-f {
+    -fx-background-color: transparent;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-min-height: 44px; -fx-pref-height: 44px;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.tab-f.active {
+    -fx-background-color: -fx-color-surface;
+    -fx-text-fill: -fx-color-primary;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 3, 0, 0, 1);
+}
+.tab-f:not(.active):hover { -fx-text-fill: -fx-color-text; }
+
+/* ---------- Tabs tipo subrayado ---------- */
+.tabs { -fx-border-color: transparent transparent -fx-color-border transparent; -fx-border-width: 0 0 1 0; }
+.tab {
+    -fx-background-color: transparent;
+    -fx-padding: 0 16 0 16;
+    -fx-min-height: 44px; -fx-pref-height: 44px;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.tab.active { -fx-text-fill: -fx-color-primary; -fx-font-weight: 600; }
+.tab:hover  { -fx-text-fill: -fx-color-text; }
+
+/* ---------- Panel de cálculo (lote) ---------- */
+.calc-panel {
+    -fx-background-color: linear-gradient(to bottom, #F0F7FF, #F8FBFF);
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 16;
+    -fx-spacing: 20;
+}
+.calc-label { -fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: #1E40AF; }
+.calc-value { -fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1E3A8A; }
+.calc-item { -fx-spacing: 4; }
+
+/* ---------- Margin box ---------- */
+.margin-box {
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 12 14 12 14;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+.margin-box .label { -fx-text-fill: -fx-color-text-muted; -fx-font-size: 13px; }
+.margin-box .value { -fx-text-fill: -fx-color-success; -fx-font-weight: 700; -fx-font-size: 15px; }
+.margin-box .value.negative { -fx-text-fill: -fx-color-danger; }
+
+/* ---------- Detalle de venta (modal) ---------- */
+.detail-item .label { -fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: -fx-color-text-soft; }
+.detail-item .value { -fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: -fx-color-text; }
+
+.totals-block {
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 14 16 14 16;
+    -fx-spacing: 8;
+}
+.totals-line { -fx-font-size: 13px; }
+.totals-line .l { -fx-text-fill: -fx-color-text-muted; }
+.totals-line .r { -fx-text-fill: -fx-color-text; -fx-font-weight: 500; }
+.totals-line.grand .l { -fx-font-weight: 600; -fx-text-fill: -fx-color-text; -fx-font-size: 15px; }
+.totals-line.grand .r { -fx-font-size: 20px; -fx-font-weight: 700; }
+
+/* ---------- Toast ---------- */
+.toast {
+    -fx-background-color: -fx-color-text;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 12 20 12 20;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 20, 0, 0, 6);
+}
+.toast.error   { -fx-background-color: -fx-color-danger; }
+.toast.success { -fx-background-color: -fx-color-success; }
+
+/* ---------- MenuButton (Exportar) ---------- */
+.menu-button {
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 0 16 0 16;
+    -fx-min-height: 40px;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+}
+.menu-button > .label { -fx-text-fill: white; }
+.menu-button .arrow   { -fx-background-color: white; }
+.menu-button:hover    { -fx-background-color: -fx-color-primary-hover; }
+
+.context-menu {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 6;
+    -fx-effect: dropshadow(gaussian, rgba(17,24,39,0.12), 16, 0, 0, 4);
+}
+.menu-item {
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: -fx-radius-sm;
+}
+.menu-item:hover, .menu-item:focused { -fx-background-color: -fx-color-bg; }
+.menu-item .label { -fx-text-fill: -fx-color-text; -fx-font-size: 13px; }
+
+/* Formularios */
+.modal-header-text { -fx-spacing: 2; }
+.form-group        { -fx-spacing: 14; }
+.field-group       { -fx-spacing: 6; }
+.field-group-sm    { -fx-spacing: 4; }
+.form-row          { -fx-spacing: 14; }
+
+.field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-text-muted;
+}
+.form-section-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-soft;
+    -fx-padding: 12 0 4 0;
+}

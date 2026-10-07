@@ -1,0 +1,580 @@
+/* ============================================================================
+   04-VIEWS · Estilos específicos por vista
+   ============================================================================ */
+
+/* ==========================================================================
+   LOGIN
+   ========================================================================== */
+.login-root { -fx-background-color: -fx-color-bg; }
+.login-bg-glow { -fx-fill: rgba(30,136,229,0.05); }
+
+.login-card {
+    -fx-background-color: -fx-color-surface;
+    -fx-background-radius: 16;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: 16;
+    -fx-border-width: 1px;
+    -fx-padding: 40 44 36 44;
+    -fx-spacing: 20;
+    -fx-effect: dropshadow(gaussian, rgba(17,24,39,0.08), 32, 0, 0, 12);
+    -fx-max-width: 420px;
+    -fx-min-width: 380px;
+}
+.login-logo {
+    -fx-min-width: 56px;  -fx-pref-width: 56px;  -fx-max-width: 56px;
+    -fx-min-height: 56px; -fx-pref-height: 56px; -fx-max-height: 56px;
+    -fx-background-color: -fx-color-primary;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(30,136,229,0.35), 14, 0, 0, 4);
+}
+.login-logo-text { -fx-font-size: 26px; -fx-font-weight: 700; -fx-text-fill: white; }
+.login-title     { -fx-font-size: 22px; -fx-font-weight: 700; -fx-text-fill: -fx-color-text; }
+.login-subtitle  { -fx-font-size: 13px; -fx-text-fill: -fx-color-text-muted; }
+.login-brand     { -fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: -fx-color-text-soft; }
+
+.login-field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-padding: 0 0 6 0;
+}
+.login-field {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border-strong;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 0 14 0 14;
+    -fx-min-height: 44px; -fx-pref-height: 44px; -fx-max-height: 44px;
+    -fx-font-size: 14px;
+    -fx-text-fill: -fx-color-text;
+    -fx-prompt-text-fill: -fx-color-text-soft;
+}
+.login-field:focused {
+    -fx-border-color: -fx-color-primary;
+    -fx-effect: dropshadow(gaussian, rgba(30,136,229,0.20), 4, 0, 0, 0);
+}
+.login-password-wrap {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border-strong;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 0 4 0 0;
+    -fx-min-height: 44px; -fx-pref-height: 44px;
+}
+.login-password-wrap .password-field,
+.login-password-wrap .text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0 14 0 14;
+    -fx-font-size: 14px;
+    -fx-text-fill: -fx-color-text;
+    -fx-prompt-text-fill: -fx-color-text-soft;
+}
+.login-eye-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-min-width: 32px;  -fx-pref-width: 32px;  -fx-max-width: 32px;
+    -fx-min-height: 32px; -fx-pref-height: 32px; -fx-max-height: 32px;
+    -fx-text-fill: -fx-color-text-soft;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+.login-eye-btn:hover { -fx-background-color: -fx-color-bg; -fx-text-fill: -fx-color-text-muted; }
+
+.login-btn {
+    -fx-background-color: -fx-color-primary;
+    -fx-background-radius: -fx-radius-base;
+    -fx-min-height: 48px; -fx-pref-height: 48px;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+.login-btn:hover    { -fx-background-color: -fx-color-primary-hover; }
+.login-btn:disabled { -fx-background-color: -fx-color-border-strong; -fx-opacity: 1; }
+
+.login-error {
+    -fx-background-color: -fx-color-danger-bg;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-padding: 10 14 10 14;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-danger;
+}
+.login-footer { -fx-font-size: 11px; -fx-text-fill: -fx-color-text-soft; -fx-padding: 20 0 0 0; }
+.login-hint   { -fx-font-size: 11px; -fx-text-fill: -fx-color-text-soft; -fx-padding: 12 0 0 0; }
+.login-hint-row  { -fx-padding: 12 0 0 0; }
+.login-hint-code {
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: 4;
+    -fx-padding: 2 6 2 6;
+    -fx-font-family: "SF Mono", "Consolas", monospace;
+    -fx-font-size: 10px;
+    -fx-text-fill: -fx-color-text-muted;
+}
+
+/* ==========================================================================
+   DASHBOARD
+   ========================================================================== */
+.dashboard-root { -fx-background-color: -fx-color-bg; }
+.dashboard-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+.dashboard-scroll .viewport { -fx-background-color: transparent; }
+.dashboard-scroll > .scroll-bar:vertical { -fx-background-color: transparent; -fx-pref-width: 10px; }
+.dashboard-scroll > .scroll-bar:vertical .thumb {
+    -fx-background-color: -fx-color-border-strong;
+    -fx-background-radius: 5;
+}
+.dashboard-body { -fx-padding: 20 28 28 28; -fx-spacing: 20; }
+
+.kpi-row  { -fx-spacing: 14; }
+.kpi-row > .kpi { -fx-max-width: Infinity; }
+.card-row { -fx-spacing: 14; }
+
+.simple-list { -fx-spacing: 0; }
+.simple-list-item {
+    -fx-padding: 10 0 10 0;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+}
+.simple-list-item .item-name  { -fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: -fx-color-text; }
+.simple-list-item .item-meta  { -fx-font-size: 12px; -fx-text-fill: -fx-color-text-muted; }
+.simple-list-item .item-value { -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: -fx-color-text; }
+
+.top-list { -fx-spacing: 14; }
+.top-item { -fx-spacing: 6; }
+.top-item-row { -fx-spacing: 10; -fx-alignment: center-left; }
+.top-rank {
+    -fx-min-width: 20px;  -fx-pref-width: 20px;  -fx-max-width: 20px;
+    -fx-min-height: 20px; -fx-pref-height: 20px; -fx-max-height: 20px;
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: 4;
+    -fx-alignment: center;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -fx-color-text-muted;
+}
+.top-name  { -fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: -fx-color-text; }
+.top-value { -fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: -fx-color-text; }
+.top-bar {
+    -fx-min-height: 6px; -fx-pref-height: 6px; -fx-max-height: 6px;
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: 3;
+}
+.top-bar-fill {
+    -fx-background-color: -fx-color-primary;
+    -fx-background-radius: 3;
+    -fx-min-height: 6px; -fx-pref-height: 6px; -fx-max-height: 6px;
+}
+
+/* BarChart */
+.chart-ventas { -fx-padding: 0; -fx-background-color: transparent; }
+.chart-ventas .chart-plot-background { -fx-background-color: transparent; }
+.chart-ventas .chart-vertical-grid-lines   { -fx-stroke: transparent; }
+.chart-ventas .chart-horizontal-grid-lines { -fx-stroke: -fx-color-border; -fx-stroke-dash-array: 3 3; }
+.chart-ventas .chart-alternative-row-fill,
+.chart-ventas .chart-alternative-column-fill { -fx-background-color: transparent; }
+.chart-ventas .axis {
+    -fx-tick-label-fill: -fx-color-text-soft;
+    -fx-tick-label-font-size: 11px;
+    -fx-border-color: transparent;
+    -fx-axis-line-fill: transparent;
+}
+.chart-ventas .axis .axis-label { -fx-text-fill: -fx-color-text-soft; }
+.chart-ventas .axis .axis-minor-tick-mark { -fx-stroke: transparent; }
+.chart-ventas .chart-bar {
+    -fx-bar-fill: -fx-color-primary;
+    -fx-background-radius: 3 3 0 0;
+    -fx-background-insets: 0;
+}
+.chart-ventas .chart-bar:hover { -fx-bar-fill: -fx-color-primary-hover; }
+.chart-ventas .chart-legend    { -fx-background-color: transparent; }
+
+/* ==========================================================================
+   INVENTARIO
+   ========================================================================== */
+.inventario-root { -fx-background-color: -fx-color-bg; }
+.inventario-body { -fx-padding: 20 28 28 28; -fx-spacing: 16; }
+.inventario-root .table-view {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+}
+
+.cell-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-text;
+}
+.cell-sku {
+    -fx-font-size: 11px;
+    -fx-text-fill: -fx-color-text-soft;
+    -fx-font-family: "SF Mono", "Consolas", monospace;
+}
+.cell-margen {
+    -fx-text-fill: -fx-color-success;
+    -fx-font-weight: 600;
+    -fx-font-size: 13px;
+}
+.cell-margen-negative {
+    -fx-text-fill: -fx-color-danger;
+}
+
+.stock-badge {
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 999;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-min-width: 40px;
+    -fx-alignment: center;
+}
+.stock-badge.out   { -fx-background-color: #FFEBEE; -fx-text-fill: #E53935; }
+.stock-badge.low   { -fx-background-color: #FFF3E0; -fx-text-fill: #E65100; }
+.stock-badge.medio { -fx-background-color: #FFFDE7; -fx-text-fill: #827717; }
+.stock-badge.ok    { -fx-background-color: #E8F5E9; -fx-text-fill: #2E7D32; }
+
+.action-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-min-width: 32px; -fx-pref-width: 32px; -fx-max-width: 32px;
+    -fx-min-height: 32px; -fx-pref-height: 32px; -fx-max-height: 32px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-font-size: 14px;
+}
+.action-btn:hover {
+    -fx-background-color: -fx-color-bg;
+    -fx-text-fill: -fx-color-text;
+}
+.action-btn.danger:hover {
+    -fx-background-color: -fx-color-danger-bg;
+    -fx-text-fill: -fx-color-danger;
+}
+
+/* ==========================================================================
+   CATEGORÍAS
+   ========================================================================== */
+.categorias-root { -fx-background-color: -fx-color-bg; }
+.categorias-body { -fx-padding: 20 28 28 28; -fx-spacing: 16; }
+.categorias-root .table-view {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+}
+
+/* ==========================================================================
+   REPORTES
+   ========================================================================== */
+.reportes-root { -fx-background-color: -fx-color-bg; }
+.reportes-body { -fx-padding: 20 28 28 28; -fx-spacing: 20; }
+.reportes-root .table-view {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+}
+.reportes-root .tabs {
+    -fx-background-color: -fx-color-surface;
+    -fx-padding: 0 4 0 4;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.reportes-root .tab {
+    -fx-background-color: transparent;
+    -fx-padding: 12 20 12 20;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 2 0;
+}
+.reportes-root .tab:hover  { -fx-text-fill: -fx-color-text; }
+.reportes-root .tab.active {
+    -fx-text-fill: -fx-color-primary;
+    -fx-font-weight: 600;
+    -fx-border-color: transparent transparent -fx-color-primary transparent;
+}
+.table-footer {
+    -fx-padding: 12 4 12 4;
+    -fx-font-size: 12px;
+    -fx-text-fill: -fx-color-text-muted;
+}
+.table-footer strong { -fx-text-fill: -fx-color-text; -fx-font-weight: 600; }
+.filters-tag {
+    -fx-background-color: -fx-color-info-bg;
+    -fx-background-radius: 999;
+    -fx-padding: 4 12 4 12;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #1565C0;
+}
+.table-wrap { -fx-spacing: 8; }
+
+/* ==========================================================================
+   USUARIOS
+   ========================================================================== */
+.usuarios-root { -fx-background-color: -fx-color-bg; }
+.usuarios-body { -fx-padding: 20 28 28 28; -fx-spacing: 16; }
+.usuarios-root .table-view {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+}
+.usuario-avatar {
+    -fx-min-width: 34px;  -fx-pref-width: 34px;  -fx-max-width: 34px;
+    -fx-min-height: 34px; -fx-pref-height: 34px; -fx-max-height: 34px;
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: 17;
+    -fx-alignment: center;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-muted;
+}
+.usuario-avatar.admin {
+    -fx-background-color: rgba(30,136,229,0.12);
+    -fx-text-fill: -fx-color-primary;
+}
+.usuario-nombre   { -fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: -fx-color-text; }
+.usuario-username { -fx-font-size: 12px; -fx-text-fill: -fx-color-text-soft; }
+.main-root        { -fx-background-color: -fx-color-bg; }
+
+/* ==========================================================================
+   PUNTO DE VENTA (POS)
+   ========================================================================== */
+.pos-root { -fx-background-color: -fx-color-bg; }
+.pos-body { -fx-spacing: 0; -fx-padding: 0; }
+
+.pos-cart-panel {
+    -fx-background-color: -fx-color-bg;
+    -fx-spacing: 0;
+}
+.pos-search-bar {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: transparent transparent -fx-color-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 16 20 16 20;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+.pos-search-field {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border-strong;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 0 14 0 14;
+    -fx-min-height: 44px; -fx-pref-height: 44px;
+    -fx-font-size: 15px;
+    -fx-text-fill: -fx-color-text;
+}
+.pos-search-field:focused {
+    -fx-border-color: -fx-color-primary;
+    -fx-effect: dropshadow(gaussian, rgba(30,136,229,0.20), 4, 0, 0, 0);
+}
+.pos-hint-btn {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 0 14 0 14;
+    -fx-min-height: 44px; -fx-pref-height: 44px;
+    -fx-font-size: 13px;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.pos-hint-btn:hover {
+    -fx-background-color: -fx-color-bg;
+    -fx-text-fill: -fx-color-text;
+}
+.pos-cart-table {
+    -fx-background-color: -fx-color-bg;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+}
+
+.pos-total-panel {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: transparent transparent transparent -fx-color-border;
+    -fx-border-width: 0 0 0 1;
+    -fx-padding: 24;
+    -fx-spacing: 16;
+    -fx-min-width: 340px; -fx-pref-width: 380px; -fx-max-width: 380px;
+}
+.pos-total-header {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-soft;
+}
+.pos-total-amount {
+    -fx-font-size: 44px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -fx-color-text;
+}
+.pos-totals-breakdown {
+    -fx-border-color: -fx-color-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 16 0 0 0;
+    -fx-spacing: 8;
+}
+.pos-totals-row {
+    -fx-alignment: center-left;
+    -fx-font-size: 13px;
+}
+.pos-totals-row > .label:first-child { -fx-text-fill: -fx-color-text-muted; }
+.pos-totals-row > .label:last-child  { -fx-text-fill: -fx-color-text; -fx-font-weight: 500; }
+
+.pos-btn-cobrar {
+    -fx-background-color: -fx-color-primary;
+    -fx-background-radius: -fx-radius-base;
+    -fx-min-height: 64px; -fx-pref-height: 64px;
+    -fx-font-size: 17px;
+    -fx-font-weight: 700;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+.pos-btn-cobrar:hover:not(:disabled) { -fx-background-color: -fx-color-primary-hover; }
+.pos-btn-cobrar:disabled { -fx-background-color: -fx-color-border-strong; -fx-text-fill: -fx-color-surface; }
+
+.pos-secondary-actions { -fx-alignment: center; }
+.pos-btn-secondary {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-sm;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-min-height: 40px; -fx-pref-height: 40px;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.pos-btn-secondary:hover:not(:disabled) {
+    -fx-background-color: -fx-color-bg;
+    -fx-text-fill: -fx-color-text;
+    -fx-border-color: -fx-color-border-strong;
+}
+.pos-btn-secondary:disabled { -fx-opacity: 0.45; }
+.pos-btn-secondary.pos-btn-danger:hover:not(:disabled) {
+    -fx-text-fill: -fx-color-danger;
+    -fx-border-color: -fx-color-danger;
+}
+
+.shortcuts-bar {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 10 20 10 20;
+    -fx-spacing: 20;
+    -fx-alignment: center-left;
+}
+.shortcut-item { -fx-alignment: center-left; }
+.shortcut-item .label { -fx-text-fill: -fx-color-text-soft; -fx-font-size: 12px; }
+.kbd {
+    -fx-background-color: -fx-color-bg;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 2 6 2 6;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -fx-color-text-muted;
+}
+
+.pos-modal-pay { -fx-max-width: 460px; -fx-min-width: 420px; }
+.pos-pay-total {
+    -fx-background-color: -fx-color-bg;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 14 16 14 16;
+    -fx-alignment: center-left;
+}
+.pos-pay-total-label { -fx-font-size: 13px; -fx-text-fill: -fx-color-text-muted; }
+.pos-pay-total-value { -fx-font-size: 22px; -fx-font-weight: 700; -fx-text-fill: -fx-color-text; }
+
+.pos-method-btn {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-sm;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-padding: 10 8 10 8;
+    -fx-font-size: 13px;
+    -fx-text-fill: -fx-color-text-muted;
+    -fx-cursor: hand;
+}
+.pos-method-btn:hover { -fx-border-color: -fx-color-border-strong; -fx-text-fill: -fx-color-text; }
+.pos-method-btn:selected {
+    -fx-background-color: rgba(30,136,229,0.06);
+    -fx-border-color: -fx-color-primary;
+    -fx-text-fill: -fx-color-primary;
+    -fx-font-weight: 600;
+}
+
+.pos-input-money {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border-strong;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-padding: 0 14 0 14;
+    -fx-min-height: 44px; -fx-pref-height: 44px;
+    -fx-font-size: 16px;
+    -fx-text-fill: -fx-color-text;
+}
+.pos-input-money:focused {
+    -fx-border-color: -fx-color-primary;
+    -fx-effect: dropshadow(gaussian, rgba(30,136,229,0.20), 4, 0, 0, 0);
+}
+
+.pos-change-row { -fx-alignment: center-left; -fx-font-size: 13px; }
+.pos-change-row > .label:first-child { -fx-text-fill: -fx-color-text-muted; }
+.pos-change-value {
+    -fx-font-size: 16px;
+        -fx-font-weight: 700;
+        -fx-text-fill: -fx-color-success;
+}
+
+.pos-change-value.falta {
+    -fx-text-fill: -fx-color-danger;
+}
+
+.pos-checkbox { -fx-font-size: 13px; -fx-text-fill: -fx-color-text-muted; }
+
+.pos-modal-pay .combo-box,
+.modal .combo-box {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border-strong;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
+    -fx-font-size: 13px;
+}
+.pos-modal-pay .combo-box:focused,
+.modal .combo-box:focused {
+    -fx-border-color: -fx-color-primary;
+}
+
+/* ==========================================================================
+   PROVEEDORES
+   ========================================================================== */
+.proveedores-root { -fx-background-color: -fx-color-bg; }
+.proveedores-body { -fx-padding: 16 28 20 28; -fx-spacing: 10; }
+.proveedores-root .table-view {
+    -fx-background-color: -fx-color-surface;
+    -fx-border-color: -fx-color-border;
+    -fx-border-radius: -fx-radius-base;
+    -fx-background-radius: -fx-radius-base;
+}
+.proveedores-split {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+.proveedores-split > .split-pane-divider {
+    -fx-background-color: -fx-color-border;
+    -fx-padding: 0 1 0 1;
+}

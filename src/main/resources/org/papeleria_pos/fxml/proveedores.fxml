@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.papeleria_pos.controller.ProveedorController"
+           styleClass="root proveedores-root">
+
+    <BorderPane>
+        <top>
+            <VBox styleClass="view-top">
+                <HBox styleClass="content-header">
+                    <VBox styleClass="content-header-text">
+                        <Label text="Proveedores" styleClass="content-title"/>
+                        <Label fx:id="lblSubtitulo"
+                               text="0 proveedores activos"
+                               styleClass="content-subtitle"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Nuevo proveedor"
+                            styleClass="btn btn-primary"
+                            onAction="#abrirNuevo"/>
+                </HBox>
+
+                <HBox styleClass="filters">
+                    <TextField fx:id="txtBuscar"
+                               promptText="Buscar proveedor…"
+                               prefWidth="380"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+        </top>
+
+        <center>
+            <SplitPane dividerPositions="0.55" orientation="VERTICAL"
+                       styleClass="proveedores-split">
+
+                <!-- ============ TABLA PROVEEDORES ============ -->
+                <VBox styleClass="proveedores-body">
+                    <Label text="PROVEEDORES" styleClass="form-section-title"/>
+                    <TableView fx:id="tabla" styleClass="table-view" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colNombre"   text="Proveedor" prefWidth="260"/>
+                            <TableColumn fx:id="colContacto" text="Contacto"  prefWidth="180"/>
+                            <TableColumn fx:id="colTelefono" text="Teléfono"  prefWidth="150"/>
+                            <TableColumn fx:id="colEmail"    text="Email"     prefWidth="240"/>
+                            <TableColumn fx:id="colEstado"   text="Estado"    prefWidth="110"
+                                         style="-fx-alignment: CENTER;"/>
+                            <TableColumn fx:id="colAcciones" text=""          prefWidth="90"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="Sin proveedores registrados."
+                                   styleClass="content-subtitle"/>
+                        </placeholder>
+                    </TableView>
+                </VBox>
+
+                <!-- ============ TABLA PRODUCTOS DEL PROVEEDOR ============ -->
+                <VBox styleClass="proveedores-body">
+                    <Label fx:id="lblProductosProveedor"
+                           text="PRODUCTOS DEL PROVEEDOR"
+                           styleClass="form-section-title"/>
+                    <TableView fx:id="tablaProductos" styleClass="table-view" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colProdNombre"    text="Producto"  prefWidth="300"/>
+                            <TableColumn fx:id="colProdSku"       text="SKU"       prefWidth="160"/>
+                            <TableColumn fx:id="colProdCategoria" text="Categoría" prefWidth="150"/>
+                            <TableColumn fx:id="colProdPrecio"    text="P. venta"  prefWidth="110"
+                                         style="-fx-alignment: CENTER-RIGHT;"/>
+                            <TableColumn fx:id="colProdStock"     text="Stock"     prefWidth="90"
+                                         style="-fx-alignment: CENTER;"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="Selecciona un proveedor para ver sus productos."
+                                   styleClass="content-subtitle"/>
+                        </placeholder>
+                    </TableView>
+                </VBox>
+
+            </SplitPane>
+        </center>
+    </BorderPane>
+
+    <!-- ============ MODAL PROVEEDOR ============ -->
+    <StackPane fx:id="modalProveedor"
+               styleClass="modal-backdrop"
+               visible="false" managed="false">
+        <VBox styleClass="modal sm">
+            <HBox styleClass="modal-header">
+                <VBox styleClass="modal-header-text">
+                    <Label fx:id="modalTitulo" text="Nuevo proveedor"
+                           styleClass="modal-title"/>
+                    <Label text="Datos del contacto comercial"
+                           styleClass="modal-sub"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✕" styleClass="modal-close" onAction="#cerrarModal"/>
+            </HBox>
+
+            <VBox styleClass="modal-body">
+                <VBox styleClass="field-group">
+                    <Label text="Nombre" styleClass="login-field-label"/>
+                    <TextField fx:id="provNombre" promptText="Distribuidora Escolar SA"/>
+                </VBox>
+                <VBox styleClass="field-group">
+                    <Label text="Contacto" styleClass="login-field-label"/>
+                    <TextField fx:id="provContacto" promptText="Nombre del vendedor"/>
+                </VBox>
+                <VBox styleClass="field-group">
+                    <Label text="Teléfono" styleClass="login-field-label"/>
+                    <TextField fx:id="provTelefono" promptText="81-1234-5678"/>
+                </VBox>
+                <VBox styleClass="field-group">
+                    <Label text="Email" styleClass="login-field-label"/>
+                    <TextField fx:id="provEmail" promptText="ventas@proveedor.com"/>
+                </VBox>
+                <VBox styleClass="field-group">
+                    <Label text="Estado" styleClass="login-field-label"/>
+                    <ComboBox fx:id="provEstado" maxWidth="Infinity"/>
+                </VBox>
+            </VBox>
+
+            <HBox styleClass="modal-footer">
+                <Button text="Cancelar" styleClass="btn btn-ghost"
+                        onAction="#cerrarModal"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button text="Guardar" styleClass="btn btn-primary"
+                        onAction="#guardar"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+
+</StackPane>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<?import javafx.collections.FXCollections?>
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.papeleria_pos.controller.ReportesController"
+           styleClass="root reportes-root">
+
+    <BorderPane>
+        <top>
+            <VBox>
+                <HBox styleClass="content-header">
+                    <VBox>
+                        <Label text="Reportes e históricos" styleClass="content-title"/>
+                        <Label fx:id="lblRango"
+                               text="Últimos 7 días · 23 sep – 30 sep 2026"
+                               styleClass="content-subtitle"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <MenuButton text="Exportar" styleClass="btn btn-primary" fx:id="btnExportar">
+                        <items>
+                            <MenuItem text="Exportar a CSV"  onAction="#exportarCSV"/>
+                            <MenuItem text="Generar PDF"     onAction="#exportarPDF"/>
+                            <MenuItem text="Imprimir"        onAction="#imprimir"/>
+                        </items>
+                    </MenuButton>
+                </HBox>
+
+                <HBox styleClass="filters">
+                    <ComboBox fx:id="cbPeriodo" prefWidth="180" promptText="Período"/>
+                    <ComboBox fx:id="cbCajero"  prefWidth="200" promptText="Todos los cajeros"/>
+                    <ComboBox fx:id="cbMetodo"  prefWidth="200" promptText="Todos los métodos"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblFiltro"
+                           text="7 días"
+                           styleClass="filters-tag"/>
+                </HBox>
+            </VBox>
+        </top>
+
+        <center>
+            <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+                <VBox styleClass="reportes-body">
+
+                    <!-- ============ KPIs ============ -->
+                    <HBox styleClass="kpi-row">
+                        <VBox styleClass="kpi" HBox.hgrow="ALWAYS">
+                            <Label text="VENTAS TOTALES" styleClass="kpi-label"/>
+                            <Label fx:id="kpiVentas" text="…" styleClass="kpi-value"/>
+                            <Label fx:id="lblDeltaVentas" text="—" styleClass="kpi-delta-up"/>
+                        </VBox>
+                        <VBox styleClass="kpi" HBox.hgrow="ALWAYS">
+                            <Label text="TICKET PROMEDIO" styleClass="kpi-label"/>
+                            <Label fx:id="kpiTicket" text="…" styleClass="kpi-value"/>
+                            <Label fx:id="lblDeltaTicket" text="—" styleClass="kpi-delta-down"/>
+                        </VBox>
+                        <VBox styleClass="kpi" HBox.hgrow="ALWAYS">
+                            <Label text="ARTÍCULOS VENDIDOS" styleClass="kpi-label"/>
+                            <Label fx:id="kpiArticulos" text="…" styleClass="kpi-value"/>
+                            <Label fx:id="lblDeltaArticulos" text="—" styleClass="kpi-delta-up"/>
+                        </VBox>
+                        <VBox styleClass="kpi" HBox.hgrow="ALWAYS">
+                            <Label text="MARGEN BRUTO" styleClass="kpi-label"/>
+                            <Label fx:id="kpiMargen" text="…" styleClass="kpi-value"/>
+                            <Label fx:id="lblDeltaMargen" text="—" styleClass="kpi-delta-up"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- ============ Gráfica + Top ============ -->
+                    <HBox styleClass="card-row">
+                        <VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="14">
+                            <VBox spacing="2">
+                                <Label text="Ventas por día" styleClass="card-title"/>
+                                <Label text="Total facturado en el período" styleClass="card-sub"/>
+                            </VBox>
+                            <BarChart fx:id="chartVentas"
+                                      prefHeight="240"
+                                      animated="false"
+                                      legendVisible="false"
+                                      horizontalGridLinesVisible="true"
+                                      verticalGridLinesVisible="false"
+                                      styleClass="chart-ventas">
+                                <xAxis><CategoryAxis/></xAxis>
+                                <yAxis><NumberAxis forceZeroInRange="true"/></yAxis>
+                            </BarChart>
+                        </VBox>
+
+                        <VBox styleClass="card" prefWidth="340" minWidth="300" spacing="14">
+                            <VBox spacing="2">
+                                <Label text="Top 5 productos" styleClass="card-title"/>
+                                <Label text="Por unidades vendidas" styleClass="card-sub"/>
+                            </VBox>
+                            <VBox fx:id="topProductos" styleClass="top-list"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- ============ Tabs de históricos ============ -->
+                    <HBox styleClass="tabs" spacing="0">
+                        <Button fx:id="tabVentas"      text="Ventas"      styleClass="tab active"
+                                onAction="#verTabVentas"/>
+                        <Button fx:id="tabMovimientos" text="Movimientos" styleClass="tab"
+                                onAction="#verTabMovimientos"/>
+                        <Button fx:id="tabFacturas"    text="Facturas"    styleClass="tab"
+                                onAction="#verTabFacturas"/>
+                        <Button fx:id="tabTurnos"      text="Turnos"      styleClass="tab"
+                                onAction="#verTabTurnos"/>
+                    </HBox>
+
+                    <!-- ============ Tabla ============ -->
+                    <VBox styleClass="table-wrap" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="tabla" styleClass="table-view" prefHeight="360">
+                            <placeholder>
+                                <Label text="Sin datos en el período seleccionado."
+                                       styleClass="content-subtitle"/>
+                            </placeholder>
+                        </TableView>
+                        <Label fx:id="lblResumen"
+                               text=""
+                               styleClass="table-footer"/>
+                    </VBox>
+
+                </VBox>
+            </ScrollPane>
+        </center>
+    </BorderPane>
+</StackPane>

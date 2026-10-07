@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="org.papeleria_pos.controller.CategoriaController"
+           styleClass="root categorias-root">
+
+    <!-- ==================== CONTENIDO ==================== -->
+    <BorderPane>
+        <top>
+            <VBox styleClass="view-top">
+                <HBox styleClass="content-header">
+                    <VBox styleClass="content-header-text">
+                        <Label text="Categorías" styleClass="content-title"/>
+                        <Label fx:id="lblSubtitulo"
+                               text="0 categorías · 0 activas"
+                               styleClass="content-subtitle"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Nueva categoría"
+                            styleClass="btn btn-primary"
+                            onAction="#abrirNuevo"/>
+                </HBox>
+
+                <HBox styleClass="filters">
+                    <TextField fx:id="txtBuscar"
+                               promptText="Buscar categoría…"
+                               prefWidth="380"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </VBox>
+        </top>
+
+        <center>
+            <VBox styleClass="categorias-body">
+                <TableView fx:id="tabla" styleClass="table-view" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colNombre"      text="Categoría"   prefWidth="220"/>
+                        <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="360"/>
+                        <TableColumn fx:id="colProductos"   text="Productos"   prefWidth="110"
+                                     style="-fx-alignment: CENTER-RIGHT;"/>
+                        <TableColumn fx:id="colEstado"      text="Estado"      prefWidth="130"
+                                     style="-fx-alignment: CENTER;"/>
+                        <TableColumn fx:id="colAcciones"    text=""            prefWidth="90"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="Sin categorías registradas." styleClass="content-subtitle"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+        </center>
+    </BorderPane>
+
+    <!-- ==================== MODAL: NUEVA / EDITAR ==================== -->
+    <StackPane fx:id="modalCategoria"
+               styleClass="modal-backdrop"
+               visible="false"
+               managed="false">
+        <VBox styleClass="modal sm">
+            <HBox styleClass="modal-header">
+                <VBox styleClass="modal-header-text">
+                    <Label fx:id="modalTitulo"
+                           text="Nueva categoría"
+                           styleClass="modal-title"/>
+                    <Label text="Agrupa productos para facilitar búsquedas en el POS"
+                           styleClass="modal-sub"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✕" styleClass="modal-close" onAction="#cerrarModal"/>
+            </HBox>
+
+            <VBox styleClass="modal-body">
+                <VBox styleClass="field-group">
+                    <Label text="Nombre" styleClass="login-field-label"/>
+                    <TextField fx:id="catNombre" promptText="Cuadernos"/>
+                </VBox>
+                <VBox styleClass="field-group">
+                    <Label text="Descripción" styleClass="login-field-label"/>
+                    <TextArea fx:id="catDescripcion"
+                              promptText="Detalles opcionales…"
+                              prefRowCount="3" wrapText="true"/>
+                </VBox>
+                <VBox styleClass="field-group">
+                    <Label text="Estado" styleClass="login-field-label"/>
+                    <ComboBox fx:id="catEstado" maxWidth="Infinity" promptText="Selecciona…"/>
+                </VBox>
+            </VBox>
+
+            <HBox styleClass="modal-footer">
+                <Button text="Cancelar" styleClass="btn btn-ghost"
+                        onAction="#cerrarModal"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                <Button text="Guardar" styleClass="btn btn-primary"
+                        onAction="#guardar"
+                        maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+    </StackPane>
+
+</StackPane>

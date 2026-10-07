@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.papeleria_pos.controller.MainController"
+            styleClass="root main-root">
+
+    <!-- ============ HEADER ============ -->
+    <top>
+        <HBox styleClass="header">
+            <HBox styleClass="brand" alignment="CENTER_LEFT" spacing="8">
+                <Region styleClass="brand-dot"/>
+                <Label text="Papelería" styleClass="brand"/>
+                <Label text="Admin" styleClass="brand-small"/>
+            </HBox>
+            <Region styleClass="header-divider"/>
+            <HBox styleClass="header-meta">
+                <Label text="Sucursal"/>
+                <Label text="Centro" styleClass="strong"/>
+                <Region minWidth="16"/>
+                <Label fx:id="lblNombre" text="—" styleClass="strong"/>
+                <Label text=" · "/>
+                <Label fx:id="lblRol" text="—" styleClass="strong"/>
+            </HBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblReloj" text="14:32"/>
+            <Button styleClass="icon-btn" text="⎋" onAction="#cerrarSesion"/>
+        </HBox>
+    </top>
+
+    <!-- ============ SIDEBAR ============ -->
+    <left>
+        <VBox styleClass="sidebar">
+            <Label text="OPERACIÓN" styleClass="nav-section"/>
+            <Button fx:id="navDashboard"  text="Dashboard"  styleClass="nav-item" onAction="#irDashboard"/>
+            <Label text="CATÁLOGO" styleClass="nav-section"/>
+            <Button fx:id="navInventario" text="Inventario" styleClass="nav-item" onAction="#irInventario"/>
+            <Button fx:id="navCategorias" text="Categorías" styleClass="nav-item" onAction="#irCategorias"/>
+            <Label text="CONTROL" styleClass="nav-section"/>
+            <Button fx:id="navReportes"   text="Reportes"   styleClass="nav-item" onAction="#irReportes"/>
+            <Button fx:id="navUsuarios"   text="Usuarios"   styleClass="nav-item" onAction="#irUsuarios"/>
+            <Button fx:id="navProveedores"   text="Proveedores"   styleClass="nav-item" onAction="#irProveedores"/>
+        </VBox>
+    </left>
+
+    <!-- ============ ÁREA CENTRAL ============ -->
+    <center>
+        <StackPane fx:id="contentArea"/>
+    </center>
+</BorderPane>
