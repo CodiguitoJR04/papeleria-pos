@@ -87,3 +87,11 @@ replay_pid*.log
 # Si guardas credenciales reales, descomenta:
 # src/main/resources/db.properties
 # src/main/resources/secrets.properties
+
+# ============================================================
+#  Bases de datos locales
+# ============================================================
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
