@@ -2,18 +2,24 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>org.papeleria_pos</groupId>
     <artifactId>Papeleria_pos_v1</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <javafx.version>23.0.1</javafx.version>
+        <app.name>PapeleriaPOS</app.name>
+        <app.version>1.0.0</app.version>
+        <app.vendor>codiguitoJR</app.vendor>
+        <app.description>Sistema de punto de venta para papelería</app.description>
+        <app.mainClass>org.papeleria_pos.Launcher</app.mainClass>
     </properties>
 
     <dependencies>
-        <!-- JavaFX -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -24,8 +30,6 @@
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
-
-        <!-- MySQL Connector -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
@@ -36,8 +40,6 @@
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
-
-        <!-- Anotaciones JetBrains -->
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
@@ -46,6 +48,7 @@
     </dependencies>
 
     <build>
+        <finalName>${app.name}-${app.version}</finalName>
         <plugins>
             <!-- Compilador -->
             <plugin>
@@ -54,17 +57,98 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>21</release>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
 
-            <!-- Plugin JavaFX (para correr con `mvn javafx:run`) -->
+            <!-- Copia dependencias a target/libs -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.7.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals><goal>copy-dependencies</goal></goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Copia el JAR principal a target/libs -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-jar-to-libs</id>
+                        <phase>package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.directory}</directory>
+                                    <includes><include>${project.build.finalName}.jar</include></includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- JavaFX para `mvn javafx:run` -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <!-- Indica módulo/clasePrincipal -->
-                    <mainClass>org.papeleria_pos/org.papeleria_pos.App</mainClass>
+                    <mainClass>${app.mainClass}</mainClass>
+                </configuration>
+            </plugin>
+
+            <!-- jpackage NO modular -->
+            <plugin>
+                <groupId>org.panteleyev</groupId>
+                <artifactId>jpackage-maven-plugin</artifactId>
+                <version>1.6.5</version>
+                <executions>
+                    <execution>
+                        <id>jpackage</id>
+                        <phase>package</phase>
+                        <goals><goal>jpackage</goal></goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <name>${app.name}</name>
+                    <appVersion>${app.version}</appVersion>
+                    <vendor>${app.vendor}</vendor>
+                    <description>${app.description}</description>
+                    <copyright>© 2026 codiguitoJR</copyright>
+
+                    <!-- Configuración NO modular -->
+                    <input>${project.build.directory}/libs</input>
+                    <mainJar>${project.build.finalName}.jar</mainJar>
+                    <mainClass>${app.mainClass}</mainClass>
+
+                    <destination>${project.build.directory}/installer</destination>
+                    <type>EXE</type>
+                    <winMenu>true</winMenu>
+                    <winMenuGroup>Papelería POS</winMenuGroup>
+                    <winDirChooser>true</winDirChooser>
+                    <winShortcut>true</winShortcut>
+                    <winPerUserInstall>false</winPerUserInstall>
+                    <winUpgradeUuid>a4f3e2b1-9c8d-4e5f-a6b7-c8d9e0f1a2b3</winUpgradeUuid>
+
+                    <javaOptions>
+                        <option>-Xmx512m</option>
+                        <option>-Dfile.encoding=UTF-8</option>
+                    </javaOptions>
                 </configuration>
             </plugin>
         </plugins>

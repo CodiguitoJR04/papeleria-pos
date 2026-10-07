@@ -24,8 +24,8 @@
     -fx-color-info-bg:       #E3F2FD;
 
     /* ---------- Radios (SIN 'px' → JavaFX los usa como Number) ---------- */
-    -fx-radius-base: 8;
-    -fx-radius-sm:   6;
+    -fx-radius-base: 8px;
+    -fx-radius-sm:   6px;
 
     /* ---------- Base ---------- */
     -fx-background-color: -fx-color-bg;
