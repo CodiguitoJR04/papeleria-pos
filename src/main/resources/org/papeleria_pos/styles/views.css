@@ -41,8 +41,8 @@
 .login-field {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border-strong;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 0 14 0 14;
     -fx-min-height: 44px; -fx-pref-height: 44px; -fx-max-height: 44px;
     -fx-font-size: 14px;
@@ -56,8 +56,8 @@
 .login-password-wrap {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border-strong;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 0 4 0 0;
     -fx-min-height: 44px; -fx-pref-height: 44px;
 }
@@ -83,7 +83,7 @@
 
 .login-btn {
     -fx-background-color: -fx-color-primary;
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
     -fx-min-height: 48px; -fx-pref-height: 48px;
     -fx-font-size: 14px;
     -fx-font-weight: 600;
@@ -95,7 +95,7 @@
 
 .login-error {
     -fx-background-color: -fx-color-danger-bg;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-background-radius: 6px;
     -fx-padding: 10 14 10 14;
     -fx-font-size: 12px;
     -fx-font-weight: 500;
@@ -202,8 +202,8 @@
 .inventario-root .table-view {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
 }
 
 .cell-name {
@@ -265,8 +265,8 @@
 .categorias-root .table-view {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
 }
 
 /* ==========================================================================
@@ -277,8 +277,8 @@
 .reportes-root .table-view {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
 }
 .reportes-root .tabs {
     -fx-background-color: -fx-color-surface;
@@ -326,8 +326,8 @@
 .usuarios-root .table-view {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
 }
 .usuario-avatar {
     -fx-min-width: 34px;  -fx-pref-width: 34px;  -fx-max-width: 34px;
@@ -368,8 +368,8 @@
 .pos-search-field {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border-strong;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 0 14 0 14;
     -fx-min-height: 44px; -fx-pref-height: 44px;
     -fx-font-size: 15px;
@@ -382,8 +382,8 @@
 .pos-hint-btn {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 0 14 0 14;
     -fx-min-height: 44px; -fx-pref-height: 44px;
     -fx-font-size: 13px;
@@ -433,7 +433,7 @@
 
 .pos-btn-cobrar {
     -fx-background-color: -fx-color-primary;
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
     -fx-min-height: 64px; -fx-pref-height: 64px;
     -fx-font-size: 17px;
     -fx-font-weight: 700;
@@ -447,8 +447,8 @@
 .pos-btn-secondary {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-sm;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
     -fx-min-height: 40px; -fx-pref-height: 40px;
     -fx-font-size: 13px;
     -fx-font-weight: 500;
@@ -490,7 +490,7 @@
 .pos-modal-pay { -fx-max-width: 460px; -fx-min-width: 420px; }
 .pos-pay-total {
     -fx-background-color: -fx-color-bg;
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
     -fx-padding: 14 16 14 16;
     -fx-alignment: center-left;
 }
@@ -500,8 +500,8 @@
 .pos-method-btn {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-sm;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
     -fx-padding: 10 8 10 8;
     -fx-font-size: 13px;
     -fx-text-fill: -fx-color-text-muted;
@@ -518,8 +518,8 @@
 .pos-input-money {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border-strong;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 0 14 0 14;
     -fx-min-height: 44px; -fx-pref-height: 44px;
     -fx-font-size: 16px;
@@ -534,8 +534,8 @@
 .pos-change-row > .label:first-child { -fx-text-fill: -fx-color-text-muted; }
 .pos-change-value {
     -fx-font-size: 16px;
-        -fx-font-weight: 700;
-        -fx-text-fill: -fx-color-success;
+    -fx-font-weight: 700;
+    -fx-text-fill: -fx-color-success;
 }
 
 .pos-change-value.falta {
@@ -548,8 +548,8 @@
 .modal .combo-box {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border-strong;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-min-height: 42px;
     -fx-pref-height: 42px;
     -fx-font-size: 13px;
@@ -567,8 +567,8 @@
 .proveedores-root .table-view {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
 }
 .proveedores-split {
     -fx-background-color: transparent;

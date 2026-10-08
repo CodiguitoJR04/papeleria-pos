@@ -28,5 +28,5 @@ public interface IProductoDAO {
     Integer obtenerIdCategoriaPorNombre(String nombre);
     /** Lista los productos activos asignados a un proveedor. */
     List<Producto> listarPorProveedor(int idProveedor);
-    List<Producto> buscarPorProveedor(int idProveedor);
+    List<Producto> buscarPorProveedor(int idProveedor, Boolean soloStockBajo);
 }

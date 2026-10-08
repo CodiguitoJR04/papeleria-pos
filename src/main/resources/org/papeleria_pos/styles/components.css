@@ -4,7 +4,8 @@
 
 /* ---------- Botones ---------- */
 .btn {
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
+    -fx-background-insets: 0;          /* 🔑 resetea las 4 capas de modena */
     -fx-padding: 0 16 0 16;
     -fx-min-height: 40px; -fx-pref-height: 40px;
     -fx-font-size: 13px;
@@ -12,10 +13,10 @@
     -fx-cursor: hand;
     -fx-border-width: 1px;
     -fx-border-color: transparent;
-    -fx-border-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
 }
 .btn-primary {
-    -fx-background-color: -fx-color-primary;
+    -fx-background-color: -fx-color-primary ;-fx-background-insets: 0;
     -fx-text-fill: white;
 }
 .btn-primary:hover    { -fx-background-color: -fx-color-primary-hover; }
@@ -35,8 +36,8 @@
 .text-field {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-sm;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
     -fx-padding: 0 12 0 12;
     -fx-min-height: 38px; -fx-pref-height: 38px;
     -fx-font-size: 13px;
@@ -50,8 +51,8 @@
 .combo-box {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-sm;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
     -fx-padding: 0 12 0 12;
     -fx-min-height: 38px; -fx-pref-height: 38px;
     -fx-font-size: 13px;
@@ -64,14 +65,15 @@
 .chip {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-sm;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
     -fx-padding: 0 14 0 14;
     -fx-min-height: 38px; -fx-pref-height: 38px;
     -fx-font-size: 13px;
     -fx-font-weight: 500;
     -fx-text-fill: -fx-color-text-muted;
     -fx-cursor: hand;
+    -fx-background-insets: 0;
 }
 .chip:hover { -fx-text-fill: -fx-color-text; -fx-border-color: -fx-color-border-strong; }
 .chip.active {
@@ -84,8 +86,8 @@
 .kpi {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 16;
     -fx-spacing: 8;
 }
@@ -108,8 +110,8 @@
 .card {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 18 20 18 20;
 }
 .card-title { -fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: -fx-color-text; }
@@ -127,8 +129,8 @@
 .table-view {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 0;
 }
 .table-view .column-header-background {
@@ -198,6 +200,7 @@
     -fx-font-size: 16px;
     -fx-text-fill: -fx-color-text-muted;
     -fx-cursor: hand;
+    -fx-background-insets: 0;
 }
 .modal-close:hover { -fx-background-color: -fx-color-bg; -fx-text-fill: -fx-color-text; }
 .modal-body   { -fx-padding: 20 24 20 24; -fx-spacing: 14; }
@@ -212,23 +215,25 @@
 /* ---------- Tabs tipo form ---------- */
 .tabs-form {
     -fx-background-color: -fx-color-bg;
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
     -fx-padding: 4;
     -fx-spacing: 4;
 }
 .tab-f {
     -fx-background-color: transparent;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-background-radius: 6px;
     -fx-min-height: 44px; -fx-pref-height: 44px;
     -fx-font-size: 13px;
     -fx-font-weight: 600;
     -fx-text-fill: -fx-color-text-muted;
     -fx-cursor: hand;
+    -fx-background-insets: 0;
 }
 .tab-f.active {
     -fx-background-color: -fx-color-surface;
     -fx-text-fill: -fx-color-primary;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 3, 0, 0, 1);
+     -fx-background-insets: 0;
 }
 .tab-f:not(.active):hover { -fx-text-fill: -fx-color-text; }
 
@@ -250,8 +255,8 @@
 .calc-panel {
     -fx-background-color: linear-gradient(to bottom, #F0F7FF, #F8FBFF);
     -fx-border-color: #BFDBFE;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 16;
     -fx-spacing: 20;
 }
@@ -262,7 +267,7 @@
 /* ---------- Margin box ---------- */
 .margin-box {
     -fx-background-color: -fx-color-bg;
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
     -fx-padding: 12 14 12 14;
     -fx-spacing: 10;
     -fx-alignment: center-left;
@@ -277,7 +282,7 @@
 
 .totals-block {
     -fx-background-color: -fx-color-bg;
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
     -fx-padding: 14 16 14 16;
     -fx-spacing: 8;
 }
@@ -290,7 +295,7 @@
 /* ---------- Toast ---------- */
 .toast {
     -fx-background-color: -fx-color-text;
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
     -fx-padding: 12 20 12 20;
     -fx-text-fill: white;
     -fx-font-size: 13px;
@@ -302,7 +307,7 @@
 
 /* ---------- MenuButton (Exportar) ---------- */
 .menu-button {
-    -fx-background-radius: -fx-radius-base;
+    -fx-background-radius: 8px;
     -fx-padding: 0 16 0 16;
     -fx-min-height: 40px;
     -fx-font-size: 13px;
@@ -316,14 +321,14 @@
 .context-menu {
     -fx-background-color: -fx-color-surface;
     -fx-border-color: -fx-color-border;
-    -fx-border-radius: -fx-radius-base;
-    -fx-background-radius: -fx-radius-base;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-padding: 6;
     -fx-effect: dropshadow(gaussian, rgba(17,24,39,0.12), 16, 0, 0, 4);
 }
 .menu-item {
     -fx-padding: 8 12 8 12;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-background-radius: 6px;
 }
 .menu-item:hover, .menu-item:focused { -fx-background-color: -fx-color-bg; }
 .menu-item .label { -fx-text-fill: -fx-color-text; -fx-font-size: 13px; }

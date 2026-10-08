@@ -275,21 +275,25 @@ public class ProductoDAOImpl implements IProductoDAO {
     }
 
     @Override
-    public List<Producto> buscarPorProveedor(int idProveedor) {
-        String sql =
+    public List<Producto> buscarPorProveedor(int idProveedor, Boolean soloStockBajo) {
+        StringBuilder sql = new StringBuilder(
                 "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
                         "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
-                        "       id_proveedor " +                                    // 🔑 agregado
-                        "  FROM producto WHERE activo = 1 AND id_proveedor = ? ORDER BY nombre";
+                        "       id_proveedor " +
+                        "  FROM producto WHERE activo = 1 AND id_proveedor = ? ");
+        if (soloStockBajo != null && soloStockBajo) {
+            sql.append(" AND stock_actual <= stock_minimo ");
+        }
+        sql.append(" ORDER BY nombre");
+
         List<Producto> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql.toString())) {
             ps.setInt(1, idProveedor);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapear(rs));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error filtrando por proveedor: "
-                    + e.getMessage(), e);
+            throw new RuntimeException("Error filtrando por proveedor: " + e.getMessage(), e);
         }
         return lista;
     }

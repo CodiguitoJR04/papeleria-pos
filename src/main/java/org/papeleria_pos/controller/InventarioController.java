@@ -38,6 +38,7 @@ public class InventarioController {
     @FXML private TableColumn<Producto, Void>    colAcciones;
 
     @FXML private TextField txtBuscar;
+    @FXML private TextField txtSkuTop;
     @FXML private ComboBox<String> cbCategoria, cbProveedor;
     @FXML private Button chipStock;
     @FXML private Label lblSubtitulo;
@@ -173,11 +174,12 @@ public class InventarioController {
        ============================================================ */
     private void configurarEscaner() {
         // 9.1 — Escáner en el SKU del modal
-        if (pSku != null) {
-            LectorCodigoBarras.attach(pSku, codigo -> {
-                pSku.setText(codigo);
-                System.out.println("[SCAN] SKU registrado: " + codigo);
-                autocompletarDesdeSku(codigo);
+        if (txtSkuTop != null) {
+            LectorCodigoBarras.attach(txtSkuTop, codigo -> {
+                txtSkuTop.setText(codigo);
+                txtBuscar.setText(codigo);
+                System.out.println("[SCAN] Buscando en tabla: " + codigo);
+                refrescar();
             });
         }
 
@@ -194,9 +196,9 @@ public class InventarioController {
     /** Botón 🔫 del modal */
     @FXML
     private void activarEscaner() {
-        if (pSku != null) {
-            LectorCodigoBarras.enfocar(pSku);
-            System.out.println("🔫 Escáner activado. Escanea un código...");
+        if (txtSkuTop != null) {
+            LectorCodigoBarras.enfocar(txtSkuTop);
+            System.out.println("🔫 Escáner activado (filtro). Escanea un código...");
         }
     }
 
@@ -347,7 +349,7 @@ public class InventarioController {
                 // 12.3 — UNA SOLA consulta según filtros
                 List<Producto> lista;
                 if (idProveedor != null) {
-                    lista = dao.buscarPorProveedor(idProveedor);
+                    lista = dao.buscarPorProveedor(idProveedor, filtroStockBajo);
                 } else {
                     lista = dao.buscar(filtro, idCategoria, filtroStockBajo);
                 }

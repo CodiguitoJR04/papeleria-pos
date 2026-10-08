@@ -28,13 +28,15 @@
                 </HBox>
 
                 <HBox styleClass="filters">
-                    <HBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                        <TextField fx:id="pSku"
+                    <HBox spacing="6">
+                        <!-- 🔑 CAMBIO 1: fx:id="txtSkuTop" (antes era pSku) -->
+                        <TextField fx:id="txtSkuTop"
                                    promptText="SKU / Código de barras"
                                    HBox.hgrow="ALWAYS"/>
+                        <!-- 🔑 CAMBIO 2: onAction="#activarEscanerBusqueda" (antes era activarEscaner) -->
                         <Button text="🔫"
                                 styleClass="icon-btn"
-                                onAction="#activarEscaner"
+                                onAction="#activarEscanerBusqueda"
                                 focusTraversable="false"/>
                     </HBox>
                     <ComboBox fx:id="cbCategoria"
@@ -119,6 +121,7 @@
                     <Label text="DATOS DEL PRODUCTO" styleClass="form-section-title"/>
                     <GridPane hgap="14" vgap="14">
                         <HBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <!-- Este pSku es el del MODAL, se queda igual -->
                             <TextField fx:id="pSku"
                                        promptText="SKU / Código de barras"
                                        HBox.hgrow="ALWAYS"/>
@@ -280,7 +283,6 @@
                         styleClass="btn btn-primary"
                         onAction="#guardarMovimiento"
                         maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-
             </HBox>
         </VBox>
     </StackPane>

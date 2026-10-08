@@ -41,7 +41,7 @@
 /* ---------- Botón icono ---------- */
 .icon-btn {
     -fx-background-color: transparent;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-background-radius: 6px;
     -fx-min-width: 36px;  -fx-pref-width: 36px;  -fx-max-width: 36px;
     -fx-min-height: 36px; -fx-pref-height: 36px; -fx-max-height: 36px;
     -fx-text-fill: -fx-color-text-muted;
@@ -66,7 +66,7 @@
 }
 .nav-item {
     -fx-background-color: transparent;
-    -fx-background-radius: -fx-radius-sm;
+    -fx-background-radius: 6px;
     -fx-padding: 0 12 0 12;
     -fx-min-height: 40px; -fx-pref-height: 40px;
     -fx-alignment: center-left;
