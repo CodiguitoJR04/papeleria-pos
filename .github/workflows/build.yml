@@ -24,15 +24,22 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      # 🔑 NUEVO: sincroniza el pom.xml con la versión del tag
+      # 🔑 Sincroniza el pom.xml con la versión del tag
       - name: Set version from tag
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           $tag = "${{ github.ref_name }}"
           $version = $tag.TrimStart('v')
           Write-Host "✔ Versión detectada del tag: $version"
-          mvn -B versions:set -DnewVersion=$version -DgenerateBackupPoms=false
-          mvn -B versions:set-property -Dproperty=app.version -DnewVersion=$version -DgenerateBackupPoms=false
+
+          mvn -B versions:set "-DnewVersion=$version" "-DgenerateBackupPoms=false"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          mvn -B versions:set-property "-Dproperty=app.version" "-DnewVersion=$version" "-DgenerateBackupPoms=false"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          Write-Host "✔ pom.xml actualizado a la versión $version"
+          Select-String -Path "pom.xml" -Pattern "<version>|<app.version>"
         shell: pwsh
 
       - name: Setup WiX v3
