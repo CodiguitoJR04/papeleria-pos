@@ -3,10 +3,14 @@ package org.papeleria_pos.dao;
 import org.papeleria_pos.config.DatabaseConnection;
 import org.papeleria_pos.dao.Interface.ITurnoDAO;
 import org.papeleria_pos.dto.TurnoAbierto;
+import org.papeleria_pos.dto.TurnoResumen;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TurnoDAOImpl implements ITurnoDAO {
 
@@ -80,5 +84,54 @@ public class TurnoDAOImpl implements ITurnoDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Error cerrando turno: " + e.getMessage(), e);
         }
+    }
+    @Override
+    public List<TurnoResumen> listarPorRango(LocalDate desde, LocalDate hasta) {
+        String sql =
+                "SELECT t.id_turno, t.id_cajero, u.nombre AS cajero, " +
+                        "       t.fecha_inicio, t.fecha_fin, " +
+                        "       t.monto_inicial, t.monto_final_efectivo, " +
+                        "       t.total_ventas, t.estado, " +
+                        "       (SELECT COUNT(*) FROM ventas v WHERE v.id_turno = t.id_turno) AS num_ventas " +
+                        "  FROM turnos t " +
+                        "  LEFT JOIN usuarios u ON u.id_usuario = t.id_cajero " +
+                        " WHERE DATE(t.fecha_inicio) BETWEEN ? AND ? " +
+                        " ORDER BY t.fecha_inicio DESC";
+
+        List<TurnoResumen> lista = new ArrayList<>();
+        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+            ps.setString(1, desde.toString());
+            ps.setString(2, hasta.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Timestamp ini = rs.getTimestamp("fecha_inicio");
+                    Timestamp fin = rs.getTimestamp("fecha_fin");
+
+                    double inicial = rs.getDouble("monto_inicial");
+                    double finalEf = rs.getDouble("monto_final_efectivo");
+                    double totalV  = rs.getDouble("total_ventas");
+
+                    // diferencia = lo que debería haber - lo que hay
+                    //            = (inicial + ventas) - finalEfectivo
+                    double dif = (inicial + totalV) - finalEf;
+
+                    lista.add(new TurnoResumen(
+                            rs.getInt("id_turno"),
+                            1,                                    // caja (hardcode por ahora)
+                            rs.getString("cajero"),
+                            ini != null ? ini.toLocalDateTime() : null,
+                            fin != null ? fin.toLocalDateTime() : null,
+                            rs.getInt("num_ventas"),
+                            totalV,
+                            dif,
+                            rs.getString("estado")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Error listando turnos: " + e.getMessage(), e);
+        }
+        return lista;
     }
 }

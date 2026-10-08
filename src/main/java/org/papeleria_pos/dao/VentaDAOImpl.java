@@ -275,13 +275,14 @@ public class VentaDAOImpl implements IVentaDAO {
     private void insertarMovimiento(Connection conn, int idProducto, int cantidad,
                                     int idCajero, String folio) throws SQLException {
         String sql = "INSERT INTO movimientos_inventario " +
-                "(id_producto, id_administrador, tipo, cantidad, fecha, motivo) " +
-                "VALUES (?, ?, 'SALIDA_VENTA', ?, NOW(), ?)";
+                "(id_producto, id_administrador, tipo, cantidad, fecha, motivo, referencia) " +
+                "VALUES (?, ?, 'SALIDA_VENTA', ?, NOW(), ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idProducto);
             ps.setInt(2, idCajero);
             ps.setInt(3, cantidad);
             ps.setString(4, "Venta " + folio);
+            ps.setString(5, folio);                        // 🔑 la referencia = folio
             ps.executeUpdate();
         }
     }

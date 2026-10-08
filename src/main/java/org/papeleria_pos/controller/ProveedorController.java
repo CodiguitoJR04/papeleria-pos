@@ -184,7 +184,7 @@ public class ProveedorController {
         lblProductosProveedor.setText("PRODUCTOS DE " + prov.getNombre().toUpperCase());
         new Thread(() -> {
             try {
-                List<Producto> lista = prodDAO.listarPorProveedor(prov.getIdProveedor());
+                List<Producto> lista = prodDAO.listarPorProveedor(prov.getIdProveedor(), false);
                 Platform.runLater(() -> productos.setAll(lista));
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -287,12 +287,12 @@ public class ProveedorController {
     private void eliminar(Proveedor p) {
         new Thread(() -> {
             try {
-                List<Producto> prods = prodDAO.listarPorProveedor(p.getIdProveedor());
+                List<Producto> lista = prodDAO.listarPorProveedor(p.getIdProveedor(), false);
                 Platform.runLater(() -> {
-                    String msg = prods.isEmpty()
+                    String msg = productos.isEmpty()
                             ? "¿Desactivar el proveedor \"" + p.getNombre() + "\"?"
                             : "El proveedor \"" + p.getNombre() + "\" tiene "
-                            + prods.size() + " productos.\n¿Desactivar de todas formas?";
+                            + productos.size() + " productos.\n¿Desactivar de todas formas?";
 
                     Alert a = new Alert(Alert.AlertType.CONFIRMATION, msg,
                             ButtonType.OK, ButtonType.CANCEL);

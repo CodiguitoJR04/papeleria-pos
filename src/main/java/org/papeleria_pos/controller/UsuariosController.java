@@ -33,6 +33,8 @@ public class UsuariosController {
 
     @FXML
     public void initialize() {
+        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colRol.setCellValueFactory(new PropertyValueFactory<>("rol"));
         colUltimoAcceso.setCellValueFactory(new PropertyValueFactory<>("ultimoAccesoTexto"));
