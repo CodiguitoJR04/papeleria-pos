@@ -14,11 +14,9 @@ jobs:
       contents: write
 
     steps:
-      # 1. Clonar el repo
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Configurar JDK 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -26,7 +24,17 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      # 3. Configurar WiX v3 (ya viene preinstalado en el runner)
+      # 🔑 NUEVO: sincroniza el pom.xml con la versión del tag
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          Write-Host "✔ Versión detectada del tag: $version"
+          mvn -B versions:set -DnewVersion=$version -DgenerateBackupPoms=false
+          mvn -B versions:set-property -Dproperty=app.version -DnewVersion=$version -DgenerateBackupPoms=false
+        shell: pwsh
+
       - name: Setup WiX v3
         run: |
           $wix = Get-ChildItem "C:\Program Files (x86)\WiX Toolset v3*\bin\candle.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -44,29 +52,33 @@ jobs:
           $wixBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
 
-      # 4. Compilar y empaquetar con Maven
       - name: Build with Maven
         run: mvn -B clean package
 
-      # 5. Verificar que el .exe se generó
       - name: Verify installer
         run: |
-          if (Test-Path "target\installer\PapeleriaPOS-*.exe") {
-            Write-Host "✔ Instalador generado"
-            Get-ChildItem target\installer\
-          } else {
+          Get-ChildItem target\installer\
+          $exe = Get-ChildItem "target\installer\PapeleriaPOS-*.exe" -ErrorAction SilentlyContinue
+          if ($null -eq $exe) {
             Write-Error "✖ No se generó el instalador"
             exit 1
           }
+          Write-Host "✔ Instalador generado: $($exe.Name)"
         shell: pwsh
 
-      # 6. Generar version.json para el auto-updater
+      # Genera version.json con la versión REAL del .exe generado
       - name: Generate version.json
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           $tag = "${{ github.ref_name }}"
           $version = $tag.TrimStart('v')
-          $url = "https://github.com/${{ github.repository }}/releases/download/$tag/PapeleriaPOS-$version.exe"
+
+          # Buscar el .exe real para sacar el nombre exacto
+          $exe = Get-ChildItem "target\installer\PapeleriaPOS-*.exe" | Select-Object -First 1
+          $exeName = $exe.Name
+          Write-Host "✔ Instalador detectado: $exeName"
+
+          $url = "https://github.com/${{ github.repository }}/releases/download/$tag/$exeName"
 
           $notes = "${{ github.event.head_commit.message }}"
           if (-not $notes) { $notes = "Nueva versión $version" }
@@ -82,7 +94,7 @@ jobs:
           Get-Content version.json
         shell: pwsh
 
-      # 7. Publicar .exe + version.json en GitHub Releases
+      # Publica .exe + version.json
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
