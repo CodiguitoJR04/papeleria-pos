@@ -26,11 +26,23 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      # 3. Instalar WiX Toolset v3 (para que jpackage pueda generar el .exe)
-      - name: Install WiX v3
+      
+      # 3. Configurar WiX v3 (ya viene preinstalado en el runner)
+      - name: Setup WiX v3
         run: |
-          choco install wixtoolset --version=3.14.1 -y --no-progress
-          echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $wix = Get-ChildItem "C:\Program Files (x86)\WiX Toolset v3*\bin\candle.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $wix) {
+            Write-Host "No se encontró WiX, instalando..."
+            choco install wixtoolset --force -y --no-progress
+            $wix = Get-ChildItem "C:\Program Files (x86)\WiX Toolset v3*\bin\candle.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+          if ($null -eq $wix) {
+            Write-Error "No se pudo encontrar candle.exe"
+            exit 1
+          }
+          $wixBin = Split-Path $wix.FullName
+          Write-Host "✔ WiX encontrado en: $wixBin"
+          $wixBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
 
       # 4. Compilar y empaquetar con Maven (genera el .exe)
