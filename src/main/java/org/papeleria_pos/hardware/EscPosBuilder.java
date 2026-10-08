@@ -58,6 +58,7 @@ public class EscPosBuilder {
 
     public EscPosBuilder blank() { return line(""); }
 
+
     public EscPosBuilder separator(int width) {
         if (width < 1) width = 32;
         return line("-".repeat(width));
@@ -72,6 +73,13 @@ public class EscPosBuilder {
         write(CMD_CUT_FULL);
         return this;
     }
+    public EscPosBuilder image(byte[] rasterData) {
+        if (rasterData != null && rasterData.length > 0) {
+            write(rasterData);
+        }
+        return this;
+    }
+
 
     public byte[] build() {
         return out.toByteArray();
@@ -81,4 +89,5 @@ public class EscPosBuilder {
         try { out.write(b); }
         catch (IOException ignored) { /* ByteArrayOutputStream no lanza */ }
     }
+
 }

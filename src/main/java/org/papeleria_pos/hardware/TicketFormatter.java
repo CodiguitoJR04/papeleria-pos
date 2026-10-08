@@ -2,6 +2,7 @@ package org.papeleria_pos.hardware;
 
 import org.papeleria_pos.dto.ItemCarrito;
 
+import java.io.InputStream;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +43,14 @@ public class TicketFormatter {
         EscPosBuilder b = new EscPosBuilder(cfg.getCharset());
         b.init();
 
+        /* ---------- 🔑 LOGO ---------- */
+        byte[] logo =   cargarLogo();
+        if (logo.length > 0) {
+            b.alignCenter()
+                    .image(logo)
+                    .feed(1);
+        }
+
         /* ---------- Encabezado ---------- */
         b.alignCenter().bold(true).doubleSize(true)
                 .line(cfg.getNegocioNombre())
@@ -51,14 +60,6 @@ public class TicketFormatter {
         if (!cfg.getNegocioTelefono().isEmpty())  b.line("Tel: " + cfg.getNegocioTelefono());
         if (!cfg.getNegocioRfc().isEmpty())       b.line("RFC: " + cfg.getNegocioRfc());
         b.blank();
-
-        /* ---------- Datos del ticket ---------- */
-        b.alignLeft();
-        b.line("Folio: " + folio);
-        b.line("Fecha: " + LocalDateTime.now().format(FECHA));
-        b.line("Cajero: " + cajero);
-        b.line("Turno: " + turno);
-        b.separator(w);
 
         /* ---------- Columnas ---------- */
         int colProd = Math.max(10, w - 4 - 9 - 9 - 3);   // 22 en 48 col
@@ -140,7 +141,28 @@ public class TicketFormatter {
         if (cfg.isCortar())     b.cut();
         return b.build();
     }
+    private static byte[] LOGO_BYTES = null;
 
+    /** Carga el logo una sola vez (cache). */
+    private static byte[] cargarLogo() {
+        if (LOGO_BYTES != null) return LOGO_BYTES;
+
+        try (InputStream in = TicketFormatter.class
+                .getResourceAsStream("/org/papeleria_pos/images/logo_jeyco.bmp")) {
+            if (in == null) {
+                System.out.println("ℹ No se encontró logo.bmp — el ticket irá sin logo.");
+                LOGO_BYTES = new byte[0];
+                return LOGO_BYTES;
+            }
+            LOGO_BYTES = ImageConverter.aEscPosRaster(in);
+            System.out.println("✔ Logo cargado: " + LOGO_BYTES.length + " bytes.");
+            return LOGO_BYTES;
+        } catch (Exception e) {
+            System.err.println("⚠ Error cargando logo: " + e.getMessage());
+            LOGO_BYTES = new byte[0];
+            return LOGO_BYTES;
+        }
+    }
     /* ============================================================
        Helpers de alineación
        ============================================================ */

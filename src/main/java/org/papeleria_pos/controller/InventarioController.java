@@ -1,5 +1,6 @@
 package org.papeleria_pos.controller;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -12,6 +13,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
+import javafx.util.Duration;
 import org.papeleria_pos.dao.CategoriaDAOImpl;
 import org.papeleria_pos.dao.Interface.IProductoDAO;
 import org.papeleria_pos.dao.Interface.IProvedorDAO;
@@ -43,6 +45,8 @@ public class InventarioController {
     @FXML private Button chipStock;
     @FXML private Label lblSubtitulo;
     Proveedor proveedor =  new Proveedor();
+    private final PauseTransition debounceBusqueda =
+            new PauseTransition(Duration.millis(300));
 
     /* ============================================================
        § 2. COMPONENTES FXML — Modal producto
@@ -99,6 +103,7 @@ public class InventarioController {
         cargarCategorias();
         cargarProveedores();
         refrescar();
+        debounceBusqueda.setOnFinished(e -> refrescar());
 
         tabla.setItems(datos);
     }
@@ -152,8 +157,17 @@ public class InventarioController {
     /* ============================================================
        § 7. FILTROS REACTIVOS
        ============================================================ */
-    private void configurarFiltros() {
-        if (txtBuscar   != null) txtBuscar.textProperty()  .addListener((o, a, b) -> refrescar());
+    private void configurarFiltros() {if (txtBuscar != null) {
+        if (cbCategoria != null)
+            cbCategoria.valueProperty().addListener((o, a, b) -> refrescar());
+        if (cbProveedor != null)
+            cbProveedor.valueProperty().addListener((o, a, b) -> refrescar());
+        // 🔑 En vez de refrescar en cada tecla, esperar 300ms
+        txtBuscar.textProperty().addListener((o, a, b) ->
+                debounceBusqueda.playFromStart());
+    }
+        if (cbCategoria != null) cbCategoria.valueProperty().addListener((o, a, b) -> refrescar());
+        if (cbProveedor != null) cbProveedor.valueProperty().addListener((o, a, b) -> refrescar());if (txtBuscar   != null) txtBuscar.textProperty()  .addListener((o, a, b) -> refrescar());
         if (cbCategoria != null) cbCategoria.valueProperty().addListener((o, a, b) -> refrescar());
         if (cbProveedor != null) cbProveedor.valueProperty().addListener((o, a, b) -> refrescar());
     }
@@ -173,20 +187,24 @@ public class InventarioController {
        § 9. SKU / ESCÁNER
        ============================================================ */
     private void configurarEscaner() {
-        // 9.1 — Escáner en el SKU del modal
-        if (txtSkuTop != null) {
-            LectorCodigoBarras.attach(txtSkuTop, codigo -> {
-                txtSkuTop.setText(codigo);
-                txtBuscar.setText(codigo);
-                System.out.println("[SCAN] Buscando en tabla: " + codigo);
-                refrescar();
+        // 9.1 — Escáner en el SKU del modal (autocompleta el formulario)
+        if (pSku != null) {
+            LectorCodigoBarras.attach(pSku, codigo -> {
+                pSku.setText(codigo);
+                System.out.println("[SCAN] SKU en modal: " + codigo);
+                autocompletarDesdeSku(codigo);
             });
         }
 
-        // 9.2 — Escáner sobre el buscador superior
-        if (txtBuscar != null) {
-            LectorCodigoBarras.attach(txtBuscar, codigo -> {
-                txtBuscar.setText(codigo);
+        // 9.2 — Campo único del filtro superior (escribe O escanea)
+        if (txtSkuTop != null) {
+            // Listener de teclado: dispara el debounce al escribir
+            txtSkuTop.textProperty().addListener((o, a, b) ->
+                    debounceBusqueda.playFromStart());
+
+            // Escáner: cuando llega el Enter del lector, refresca inmediatamente
+            LectorCodigoBarras.attach(txtSkuTop, codigo -> {
+                txtSkuTop.setText(codigo);
                 System.out.println("[SCAN] Buscando: " + codigo);
                 refrescar();
             });
@@ -194,20 +212,22 @@ public class InventarioController {
     }
 
     /** Botón 🔫 del modal */
+    /** Botón 🔫 del modal producto. */
     @FXML
     private void activarEscaner() {
-        if (txtSkuTop != null) {
-            LectorCodigoBarras.enfocar(txtSkuTop);
-            System.out.println("🔫 Escáner activado (filtro). Escanea un código...");
+        if (pSku != null) {
+            LectorCodigoBarras.enfocar(pSku);
+            System.out.println("🔫 Escáner activado (modal). Escanea un código...");
         }
     }
 
     /** Botón 🔫 de la barra de filtros (buscador superior) */
+    /** Botón 🔫 de la barra de filtros superior. */
     @FXML
     private void activarEscanerBusqueda() {
-        if (txtBuscar != null) {
-            LectorCodigoBarras.enfocar(txtBuscar);
-            System.out.println("🔫 Escáner activado. Escanea un código...");
+        if (txtSkuTop != null) {
+            LectorCodigoBarras.enfocar(txtSkuTop);
+            System.out.println("🔫 Escáner activado (filtro). Escanea un código...");
         }
     }
 
@@ -219,15 +239,33 @@ public class InventarioController {
                 Platform.runLater(() -> {
                     if (!encontrados.isEmpty()) {
                         Producto p = encontrados.get(0);
-                        if (pNombre != null)        pNombre.setText(p.getNombre());
-                        if (pPrecioCompra != null)  pPrecioCompra.setText(String.valueOf(p.getPrecioCompra()));
-                        if (pPrecioVenta != null)   pPrecioVenta.setText(String.valueOf(p.getPrecioVenta()));
-                        if (pCategoria != null && p.getNombreCategoria() != null) {
+
+                        // 🔑 Modo edición
+                        editandoId = p.getIdProducto();
+                        if (modalTitulo != null)
+                            modalTitulo.setText("Editar: " + p.getNombre());
+
+                        if (pNombre       != null) pNombre.setText(p.getNombre());
+                        if (pPrecioCompra != null) pPrecioCompra.setText(String.valueOf(p.getPrecioCompra()));
+                        if (pPrecioVenta  != null) pPrecioVenta.setText(String.valueOf(p.getPrecioVenta()));
+                        if (uStock        != null) uStock.setText(String.valueOf(p.getStockActual()));
+                        if (uStockMin     != null) uStockMin.setText(String.valueOf(p.getStockMinimo()));
+                        if (lStockMin     != null) lStockMin.setText(String.valueOf(p.getStockMinimo()));
+
+                        if (pCategoria != null && p.getNombreCategoria() != null)
                             pCategoria.setValue(p.getNombreCategoria());
-                        }
-                        System.out.println("[SCAN] Producto encontrado: " + p.getNombre());
+
+                        if (pProveedor != null && p.getNombre() != null)
+                            pProveedor.setValue(p.getNombre());
+
+                        modoUnidad();
+                        calcularMargen();
+
+                        System.out.println("[SCAN] Producto existente → modo edición: " + p.getNombre());
                     } else {
-                        System.out.println("[SCAN] SKU nuevo (no existe en BD)");
+                        editandoId = null;
+                        if (modalTitulo != null) modalTitulo.setText("Nuevo producto");
+                        System.out.println("[SCAN] SKU nuevo → alta limpia");
                     }
                 });
             } catch (Exception e) {
@@ -325,7 +363,7 @@ public class InventarioController {
     private void refrescar() {
         new Thread(() -> {
             try {
-                String filtro = txtBuscar != null ? txtBuscar.getText() : null;
+                String filtro = txtSkuTop != null ? txtSkuTop.getText() : null;
 
                 // 12.1 — Resolver categoría seleccionada
                 Integer idCategoria = null;
@@ -445,8 +483,8 @@ public class InventarioController {
         if (pCategoria != null && p.getNombreCategoria() != null) {
             pCategoria.setValue(p.getNombreCategoria());
         }
-        if (pProveedor != null && proveedor.getNombre() != null) {
-            pProveedor.setValue(proveedor.getNombre());
+        if (pProveedor != null && p.getNombre() != null) {
+            pProveedor.setValue(p.getNombre());  // ✅ usa el dato del producto
         }
 
         modoUnidad();
