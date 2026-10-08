@@ -26,6 +26,7 @@ public class App extends Application {
         stage.setMinHeight(640);
         mostrarLogin();
         stage.show();
+        org.papeleria_pos.updater.Actualizador.verificarEnBackground();
     }
 
     /* ============================================================

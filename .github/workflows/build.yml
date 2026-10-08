@@ -3,22 +3,22 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'v*'          # Se dispara cuando subes un tag que empieza con "v"
-  workflow_dispatch:  # También permite correrlo a mano desde GitHub
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
 
     permissions:
-      contents: write   # Necesario para publicar en Releases
+      contents: write
 
     steps:
       # 1. Clonar el repo
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Configurar JDK 21 (Temurin, igual que usas local)
+      # 2. Configurar JDK 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -26,7 +26,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      
       # 3. Configurar WiX v3 (ya viene preinstalado en el runner)
       - name: Setup WiX v3
         run: |
@@ -45,7 +44,7 @@ jobs:
           $wixBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
 
-      # 4. Compilar y empaquetar con Maven (genera el .exe)
+      # 4. Compilar y empaquetar con Maven
       - name: Build with Maven
         run: mvn -B clean package
 
@@ -61,12 +60,36 @@ jobs:
           }
         shell: pwsh
 
-      # 6. Publicar el .exe en GitHub Releases (solo si es un tag)
+      # 6. Generar version.json para el auto-updater
+      - name: Generate version.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          $url = "https://github.com/${{ github.repository }}/releases/download/$tag/PapeleriaPOS-$version.exe"
+
+          $notes = "${{ github.event.head_commit.message }}"
+          if (-not $notes) { $notes = "Nueva versión $version" }
+
+          $json = @{
+            version = $version
+            url     = $url
+            notes   = $notes
+          } | ConvertTo-Json -Compress
+
+          $json | Out-File -FilePath "version.json" -Encoding utf8
+          Write-Host "✔ version.json generado:"
+          Get-Content version.json
+        shell: pwsh
+
+      # 7. Publicar .exe + version.json en GitHub Releases
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: target/installer/PapeleriaPOS-*.exe
+          files: |
+            target/installer/PapeleriaPOS-*.exe
+            version.json
           generate_release_notes: true
           draft: false
           prerelease: false
