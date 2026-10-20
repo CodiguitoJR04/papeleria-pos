@@ -24,49 +24,36 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      # 🔑 Sincroniza el pom.xml con la versión del tag
-      - name: Set version from tag
+      - name: Sync version from tag to pom.xml
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           $tag = "${{ github.ref_name }}"
           $version = $tag.TrimStart('v')
-          Write-Host "✔ Versión detectada del tag: $version"
-
+          Write-Host "Version detected from tag: $version"
           mvn -B versions:set "-DnewVersion=$version" "-DgenerateBackupPoms=false"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
           mvn -B versions:set-property "-Dproperty=app.version" "-DnewVersion=$version" "-DgenerateBackupPoms=false"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          Write-Host "✔ pom.xml actualizado a la versión $version"
-          Select-String -Path "pom.xml" -Pattern "<version>|<app.version>"
         shell: pwsh
-          
-          # 🔑 NUEVO: actualizar app.properties con la versión del tag
-                 - name: Update app.properties
-                 if: startsWith(github.ref, 'refs/tags/v')
-                 run: |
-                   $tag = "${{ github.ref_name }}"
-                   $version = $tag.TrimStart('v')
-                   Write-Host "✔ Actualizando app.properties a la versión $version"
-                   "app.version=$version" | Out-File -FilePath "src/main/resources/app.properties" -Encoding utf8
-                   Get-Content src/main/resources/app.properties
-                 shell: pwsh
+
+      - name: Update app.properties
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          Write-Host "Updating app.properties to version: $version"
+          "app.version=$version" | Out-File -FilePath "src/main/resources/app.properties" -Encoding utf8
+          Get-Content src/main/resources/app.properties
+        shell: pwsh
 
       - name: Setup WiX v3
         run: |
           $wix = Get-ChildItem "C:\Program Files (x86)\WiX Toolset v3*\bin\candle.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($null -eq $wix) {
-            Write-Host "No se encontró WiX, instalando..."
+            Write-Host "Installing WiX..."
             choco install wixtoolset --force -y --no-progress
             $wix = Get-ChildItem "C:\Program Files (x86)\WiX Toolset v3*\bin\candle.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           }
-          if ($null -eq $wix) {
-            Write-Error "No se pudo encontrar candle.exe"
-            exit 1
-          }
           $wixBin = Split-Path $wix.FullName
-          Write-Host "✔ WiX encontrado en: $wixBin"
+          Write-Host "WiX found at: $wixBin"
           $wixBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
 
@@ -75,31 +62,24 @@ jobs:
 
       - name: Verify installer
         run: |
-          Get-ChildItem target\installer\
           $exe = Get-ChildItem "target\installer\PapeleriaPOS-*.exe" -ErrorAction SilentlyContinue
           if ($null -eq $exe) {
-            Write-Error "✖ No se generó el instalador"
+            Write-Error "Installer not generated"
             exit 1
           }
-          Write-Host "✔ Instalador generado: $($exe.Name)"
+          Write-Host "Installer generated: $($exe.Name)"
         shell: pwsh
 
-      # Genera version.json con la versión REAL del .exe generado
       - name: Generate version.json
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           $tag = "${{ github.ref_name }}"
           $version = $tag.TrimStart('v')
-
-          # Buscar el .exe real para sacar el nombre exacto
           $exe = Get-ChildItem "target\installer\PapeleriaPOS-*.exe" | Select-Object -First 1
-          $exeName = $exe.Name
-          Write-Host "✔ Instalador detectado: $exeName"
-
-          $url = "https://github.com/${{ github.repository }}/releases/download/$tag/$exeName"
-
+          $url = "https://github.com/${{ github.repository }}/releases/download/$tag/$($exe.Name)"
+          
           $notes = "${{ github.event.head_commit.message }}"
-          if (-not $notes) { $notes = "Nueva versión $version" }
+          if (-not $notes) { $notes = "New version $version" }
 
           $json = @{
             version = $version
@@ -108,11 +88,9 @@ jobs:
           } | ConvertTo-Json -Compress
 
           $json | Out-File -FilePath "version.json" -Encoding utf8
-          Write-Host "✔ version.json generado:"
-          Get-Content version.json
+          Write-Host "version.json generated successfully"
         shell: pwsh
 
-      # Publica .exe + version.json
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
