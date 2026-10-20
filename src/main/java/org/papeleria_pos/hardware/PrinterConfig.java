@@ -40,7 +40,7 @@ public class PrinterConfig {
     public int     getCopias()                 { return parseInt(props.getProperty("impresora.copias", "1"), 1); }
 
     /* ---------- Negocio ---------- */
-    public String  getNegocioNombre()    { return props.getProperty("negocio.nombre", "PAPELERÍA POS").trim(); }
+    public String  getNegocioNombre()    { return props.getProperty("negocio.nombre", "PAPELERIA JEYCO").trim(); }
     public String  getNegocioDireccion() { return props.getProperty("negocio.direccion", "").trim(); }
     public String  getNegocioTelefono()  { return props.getProperty("negocio.telefono", "").trim(); }
     public String  getNegocioRfc()       { return props.getProperty("negocio.rfc", "").trim(); }

@@ -41,6 +41,17 @@ jobs:
           Write-Host "✔ pom.xml actualizado a la versión $version"
           Select-String -Path "pom.xml" -Pattern "<version>|<app.version>"
         shell: pwsh
+          
+          # 🔑 NUEVO: actualizar app.properties con la versión del tag
+                 - name: Update app.properties
+                 if: startsWith(github.ref, 'refs/tags/v')
+                 run: |
+                   $tag = "${{ github.ref_name }}"
+                   $version = $tag.TrimStart('v')
+                   Write-Host "✔ Actualizando app.properties a la versión $version"
+                   "app.version=$version" | Out-File -FilePath "src/main/resources/app.properties" -Encoding utf8
+                   Get-Content src/main/resources/app.properties
+                 shell: pwsh
 
       - name: Setup WiX v3
         run: |

@@ -130,6 +130,8 @@ public class PuntoDeVentaController {
         configurarEscaner();
         configurarModalFactura();
         configurarAtajos();
+        configurarCentradoModal(modalCobro);
+        configurarCentradoModal(modalFactura);
 
         if (txtRecibido != null) {
             txtRecibido.textProperty().addListener((obs, viejo, nuevo) -> calcularCambio());
@@ -210,10 +212,8 @@ public class PuntoDeVentaController {
        Escáner + búsqueda reactiva
        ============================================================ */
     private void configurarEscaner() {
-        // ---- Popup de resultados ----
-        listaResultados.setPrefWidth(420);
-        listaResultados.setPrefHeight(260);
-        listaResultados.setStyle("-fx-font-size: 13px;");
+        listaResultados.setPrefWidth(txtEscaner.getWidth() > 0 ? txtEscaner.getWidth() : 450);
+        listaResultados.getStyleClass().add("search-popup-list");
 
         listaResultados.setCellFactory(lv -> new ListCell<>() {
             @Override protected void updateItem(Producto p, boolean empty) {
@@ -277,6 +277,7 @@ public class PuntoDeVentaController {
                     }
                     listaResultados.getItems().setAll(matches);
                     listaResultados.getSelectionModel().selectFirst();
+                    listaResultados.setPrefWidth(txtEscaner.getWidth());
 
                     Bounds b = txtEscaner.localToScreen(txtEscaner.getBoundsInLocal());
                     popupResultados.show(txtEscaner, b.getMinX(), b.getMaxY() + 2);
@@ -437,6 +438,7 @@ public class PuntoDeVentaController {
 
         modalCobro.setVisible(true);
         modalCobro.setManaged(true);
+        modalCobro.setAlignment(Pos.CENTER);
         Platform.runLater(() -> {
             txtRecibido.requestFocus();
             txtRecibido.selectAll();
@@ -873,5 +875,18 @@ public class PuntoDeVentaController {
         Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
         a.setHeaderText(null);
         a.showAndWait();
+    }
+    private void configurarCentradoModal(StackPane modalStackPane) {
+        if (modalStackPane != null && !modalStackPane.getChildren().isEmpty()) {
+            javafx.scene.Node contenidoModal = modalStackPane.getChildren().get(0);
+
+            // Fuerza la alineación al centro absoluto del StackPane
+            StackPane.setAlignment(contenidoModal, javafx.geometry.Pos.CENTER);
+
+            // Evita que el contenedor blanco crezca verticalmente de forma infinita
+            if (contenidoModal instanceof javafx.scene.layout.Region) {
+                ((javafx.scene.layout.Region) contenidoModal).setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+            }
+        }
     }
 }

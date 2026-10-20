@@ -150,29 +150,43 @@
     </BorderPane>
 
     <!-- ============ MODAL COBRO ============ -->
+    <!-- =================================================================
+     MODAL 1: MODAL DE COBRO (Cobrar Venta)
+     Ancho fijado a 440px mediante maxWidth y prefWidth en el VBox principal
+     =================================================================== -->
     <StackPane fx:id="modalCobro"
                styleClass="modal-backdrop"
                visible="false"
-               managed="false">
-        <VBox styleClass="modal pos-modal-pay">
+               managed="false"
+               >
+
+        <!-- Contenedor del Modal (Limitado a 440px de ancho) -->
+        <VBox styleClass="modal pos-modal-pay"
+              maxWidth="440"
+              prefWidth="440"
+              >
+
+            <!-- Encabezado del Modal -->
             <HBox styleClass="modal-header">
                 <VBox styleClass="modal-header-text">
                     <Label text="Cobrar venta" styleClass="modal-title"/>
-                    <Label text="Confirma el método y el monto recibido"
-                           styleClass="modal-sub"/>
+                    <Label text="Confirms el método y el monto recibido" styleClass="modal-sub"/>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button text="✕" styleClass="modal-close" onAction="#cerrarCobro"/>
             </HBox>
 
+            <!-- Cuerpo del Modal -->
             <VBox styleClass="modal-body">
 
+                <!-- Fila Total a Pagar -->
                 <HBox styleClass="pos-pay-total">
                     <Label text="Total a pagar" styleClass="pos-pay-total-label"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Label fx:id="lblModalTotal" text="0.00" styleClass="pos-pay-total-value"/>
                 </HBox>
 
+                <!-- Selección Método de Pago -->
                 <VBox styleClass="field-group">
                     <Label text="Método de pago" styleClass="field-label"/>
                     <HBox spacing="8">
@@ -191,6 +205,7 @@
                     </HBox>
                 </VBox>
 
+                <!-- Campo Recibido -->
                 <VBox styleClass="field-group">
                     <Label text="Recibido" styleClass="field-label"/>
                     <TextField fx:id="txtRecibido"
@@ -199,17 +214,20 @@
                                promptText="0.00"/>
                 </VBox>
 
+                <!-- Fila Cambio -->
                 <HBox styleClass="pos-change-row">
                     <Label text="Cambio"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Label fx:id="lblCambio" text="0.00" styleClass="pos-change-value"/>
                 </HBox>
 
+                <!-- Opción de Facturación -->
                 <CheckBox fx:id="chkFacturar"
                           text="Facturar (capturar datos fiscales)"
                           styleClass="pos-checkbox"/>
             </VBox>
 
+            <!-- Pie / Botonera del Modal -->
             <HBox styleClass="modal-footer">
                 <Button text="Cancelar"
                         styleClass="btn btn-ghost"
@@ -222,49 +240,67 @@
             </HBox>
         </VBox>
     </StackPane>
+
+
+    <!-- =================================================================
+         MODAL 2: MODAL DE FACTURACIÓN (CFDI 4.0)
+         Ancho fijado a 380px mediante maxWidth y prefWidth en el VBox principal
+         =================================================================== -->
     <StackPane fx:id="modalFactura"
                styleClass="modal-backdrop"
                visible="false"
                managed="false">
-        <VBox styleClass="modal sm">
+
+        <!-- Contenedor del Modal (Limitado a 380px de ancho para formato pequeño) -->
+        <VBox styleClass="modal sm"
+              maxWidth="380"
+              prefWidth="380">
+
+            <!-- Encabezado del Modal -->
             <HBox styleClass="modal-header">
                 <VBox styleClass="modal-header-text">
                     <Label text="Datos de facturación" styleClass="modal-title"/>
-                    <Label text="CFDI 4.0 · los datos deben coincidir con el SAT"
-                           styleClass="modal-sub"/>
+                    <Label text="CFDI 4.0 · los datos deben coincidir con el SAT" styleClass="modal-sub"/>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button text="✕" styleClass="modal-close" onAction="#cerrarModalFactura"/>
             </HBox>
 
+            <!-- Cuerpo del Modal -->
             <VBox styleClass="modal-body">
 
+                <!-- Fila Total a Facturar -->
                 <HBox styleClass="pos-pay-total">
                     <Label text="Total a facturar" styleClass="pos-pay-total-label"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Label fx:id="lblFacturaTotal" text="0.00" styleClass="pos-pay-total-value"/>
                 </HBox>
 
+                <!-- Campo RFC -->
                 <VBox styleClass="field-group">
                     <Label text="RFC" styleClass="field-label"/>
                     <TextField fx:id="facRfc" promptText="XAXX010101000"/>
                 </VBox>
 
+                <!-- Campo Razón Social -->
                 <VBox styleClass="field-group">
                     <Label text="Razón social" styleClass="field-label"/>
                     <TextField fx:id="facRazon" promptText="Público en general"/>
                 </VBox>
 
+                <!-- Select Régimen Fiscal -->
                 <VBox styleClass="field-group">
                     <Label text="Régimen fiscal" styleClass="field-label"/>
                     <ComboBox fx:id="facRegimen" maxWidth="Infinity"/>
                 </VBox>
 
+                <!-- Select Uso del CFDI -->
                 <VBox styleClass="field-group">
                     <Label text="Uso del CFDI" styleClass="field-label"/>
                     <ComboBox fx:id="facUso" maxWidth="Infinity"/>
                 </VBox>
 
+                <!-- Select Método de Pago -->
                 <VBox styleClass="field-group">
                     <Label text="Método de pago" styleClass="field-label"/>
                     <ComboBox fx:id="facMetodo" maxWidth="Infinity"/>
@@ -272,6 +308,7 @@
 
             </VBox>
 
+            <!-- Pie / Botonera del Modal -->
             <HBox styleClass="modal-footer">
                 <Button text="Cancelar"
                         styleClass="btn btn-ghost"
