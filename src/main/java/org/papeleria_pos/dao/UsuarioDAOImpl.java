@@ -25,30 +25,31 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
 
     @Override
     public List<UsuarioResumen> buscar(String filtro, String rol, Boolean activo) {
+        // 🔑 Usamos la tabla real 'usuarios'
         StringBuilder sql = new StringBuilder(
-                "SELECT u.id_user, u.nombre, u.username, u.rol, u.activo, u.ultimo_acceso, " +
-                        "       (SELECT COUNT(*) FROM venta v " +
-                        "         WHERE v.usuario = u.username " +
-                        "           AND DATE(v.fecha) = CURDATE()) AS ventas_hoy " +   // 🔑
-                        "  FROM usuario u WHERE 1=1 ");
+                "SELECT id_usuario AS id_user, nombre, username, rol, activo, ultimo_acceso, " +
+                        "       (SELECT COUNT(*) FROM ventas v " +
+                        "         WHERE v.id_cajero = u.id_usuario " +
+                        "           AND DATE(v.fecha_hora) = CURDATE()) AS ventas_hoy " +
+                        "  FROM usuarios u WHERE 1=1 ");
 
         List<Object> params = new ArrayList<>();
 
         if (filtro != null && !filtro.isEmpty()) {
-            sql.append(" AND (LOWER(u.nombre) LIKE ? OR LOWER(u.username) LIKE ?) ");
+            sql.append(" AND (LOWER(nombre) LIKE ? OR LOWER(username) LIKE ?) ");
             String f = "%" + filtro.toLowerCase() + "%";
             params.add(f);
             params.add(f);
         }
         if (rol != null && !rol.isEmpty()) {
-            sql.append(" AND u.rol = ? ");
-            params.add(rol);
+            sql.append(" AND rol = ? ");
+            params.add(rol.toUpperCase()); // En la BD dice ADMINISTRADOR o CAJERO
         }
         if (activo != null) {
-            sql.append(" AND u.activo = ? ");
+            sql.append(" AND activo = ? ");
             params.add(activo ? 1 : 0);
         }
-        sql.append(" ORDER BY u.nombre");
+        sql.append(" ORDER BY nombre");
 
         List<UsuarioResumen> lista = new ArrayList<>();
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql.toString())) {
@@ -80,13 +81,14 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
     @Override
     public boolean insertar(String nombre, String username, String password,
                             String rol, boolean activo) {
-        String sql = "INSERT INTO usuario (nombre, username, password, rol, activo) " +
+        // 🔑 INSERT en la tabla 'usuarios' con la columna 'password_hash'
+        String sql = "INSERT INTO usuarios (nombre, username, password_hash, rol, activo) " +
                 "VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, username);
             ps.setString(3, password);
-            ps.setString(4, rol);
+            ps.setString(4, rol.toUpperCase()); // 'ADMINISTRADOR' o 'CAJERO'
             ps.setInt(5, activo ? 1 : 0);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -97,13 +99,13 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
     @Override
     public boolean actualizar(int id, String nombre, String username, String password,
                               String rol, boolean activo) {
-        String sql = "UPDATE usuario SET nombre=?, username=?, password=?, rol=?, activo=? " +
-                "WHERE id_user=?";
+        String sql = "UPDATE usuarios SET nombre=?, username=?, password_hash=?, rol=?, activo=? " +
+                "WHERE id_usuario=?";
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, username);
             ps.setString(3, password);
-            ps.setString(4, rol);
+            ps.setString(4, rol.toUpperCase());
             ps.setInt(5, activo ? 1 : 0);
             ps.setInt(6, id);
             return ps.executeUpdate() > 0;
@@ -114,7 +116,7 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
 
     @Override
     public boolean eliminar(int id) {
-        String sql = "DELETE FROM usuario WHERE id_user=?";
+        String sql = "DELETE FROM usuarios WHERE id_usuario=?";
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
@@ -125,7 +127,7 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
 
     @Override
     public int contarActivos() {
-        String sql = "SELECT COUNT(*) FROM usuario WHERE activo = 1";
+        String sql = "SELECT COUNT(*) FROM usuarios WHERE activo = 1";
         try (Statement st = DatabaseConnection.get().createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             return rs.next() ? rs.getInt(1) : 0;
@@ -148,19 +150,15 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
                 String rol  = rs.getString("rol");
                 String hash = rs.getString("password_hash");
 
-                // 🔑 Verificar según el formato del hash
                 boolean ok;
                 if (hash != null && hash.startsWith("$2a$")) {
-                    // Es un hash BCrypt → verificar con BCrypt
                     ok = org.mindrot.jbcrypt.BCrypt.checkpw(password, hash);
                 } else {
-                    // Es texto plano (modo dev) → comparar directo
                     ok = password.equals(hash);
                 }
 
                 if (!ok) return null;
 
-                // Actualizar último acceso
                 String upd = "UPDATE usuarios SET ultimo_acceso = NOW() WHERE username = ?";
                 try (PreparedStatement ps2 = DatabaseConnection.get().prepareStatement(upd)) {
                     ps2.setString(1, username);

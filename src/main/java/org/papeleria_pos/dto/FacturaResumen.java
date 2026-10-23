@@ -11,11 +11,13 @@ public class FacturaResumen {
     private final String razonSocial;
     private final double total;
     private final String estado;
-    private final int folioVenta;
+
+    // 🔑 CAMBIAR ESTO A String
+    private final String folioVenta;
 
     public FacturaResumen(int idFactura, String serie, int folio, LocalDate fecha,
                           String rfc, String razonSocial, double total,
-                          String estado, int folioVenta) {
+                          String estado, String folioVenta) { // 🔑 CAMBIAR A String
         this.idFactura = idFactura;
         this.serie = serie;
         this.folio = folio;
@@ -35,7 +37,9 @@ public class FacturaResumen {
     public String getRazonSocial()   { return razonSocial; }
     public double getTotal()         { return total; }
     public String getEstado()        { return estado; }
-    public int getFolioVenta()       { return folioVenta; }
+
+    // 🔑 CAMBIAR A String
+    public String getFolioVenta()    { return folioVenta; }
 
     public String getSerieFolio()    { return serie + "-" + folio; }
 }

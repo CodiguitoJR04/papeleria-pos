@@ -12,6 +12,7 @@ public class Producto {
     private int stockMinimo;
     private boolean activo = true;
     private int    idProveedor;
+    private String tipoProducto = "PAPELERIA";
 
     public Producto() {}
 
@@ -47,4 +48,6 @@ public class Producto {
 
     public int getIdProveedor()                      { return idProveedor; }
     public void setIdProveedor(int v)                { this.idProveedor = v; }
+    public String getTipoProducto() { return tipoProducto; }
+    public void setTipoProducto(String tipoProducto) { this.tipoProducto = tipoProducto; }
 }

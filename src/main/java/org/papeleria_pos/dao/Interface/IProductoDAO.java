@@ -29,4 +29,6 @@ public interface IProductoDAO {
     /** Lista los productos activos asignados a un proveedor. */
     List<Producto> listarPorProveedor(int idProveedor, boolean soloStockBajo);
     List<Producto> buscarPorProveedor(int idProveedor, Boolean soloStockBajo);
+    List<Producto> buscar(String filtro, Integer idCategoria, Boolean soloStockBajo, String tipoProducto);
+    List<Producto> buscarPorProveedor(int idProveedor, Boolean soloStockBajo, String tipoProducto);
 }

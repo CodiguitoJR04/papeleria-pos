@@ -12,7 +12,9 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.papeleria_pos.hardware.BarcodeGenerator;
 
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.papeleria_pos.dao.CategoriaDAOImpl;
 import org.papeleria_pos.dao.Interface.IProductoDAO;
@@ -22,7 +24,13 @@ import org.papeleria_pos.dao.ProveedorDAOImpl;
 import org.papeleria_pos.models.Producto;
 import org.papeleria_pos.models.Proveedor;
 import org.papeleria_pos.hardware.LectorCodigoBarras;
+import org.papeleria_pos.Services.ImportadorProductos;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +52,9 @@ public class InventarioController {
     @FXML private ComboBox<String> cbCategoria, cbProveedor;
     @FXML private Button chipStock;
     @FXML private Label lblSubtitulo;
+    @FXML private Label lblTituloModulo;
+    @FXML private Button btnSeccionPapeleria, btnSeccionSkincare;
+
     Proveedor proveedor =  new Proveedor();
     private final PauseTransition debounceBusqueda =
             new PauseTransition(Duration.millis(300));
@@ -78,6 +89,7 @@ public class InventarioController {
 
     private boolean filtroStockBajo = false;   // chip "Stock bajo"
     private Integer editandoId = null;         // null = nuevo, valor = editar
+    private String seccionActual = "PAPELERIA";
 
     private static final NumberFormat MXN =
             NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-MX"));
@@ -229,6 +241,133 @@ public class InventarioController {
             LectorCodigoBarras.enfocar(txtSkuTop);
             System.out.println("🔫 Escáner activado (filtro). Escanea un código...");
         }
+    }
+
+       /* ============================================================
+       § 23. IMPORTACIÓN MASIVA (EXCEL Y CSV)
+       ============================================================ */
+
+    @FXML
+    private void descargarPlantilla() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar Plantilla de Productos");
+        fileChooser.setInitialFileName("plantilla_productos.xlsx");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"));
+
+        File file = fileChooser.showSaveDialog(tabla.getScene().getWindow());
+        if (file == null) return;
+
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Productos");
+
+            // Cabeceras
+            org.apache.poi.ss.usermodel.Row header = sheet.createRow(0);
+            // 🔑 Agregamos la columna "sku" (opcional)
+            String[] columnas = {"proveedor", "sku", "producto", "stock", "costo_unitario", "precio_venta"};
+            for (int i = 0; i < columnas.length; i++) {
+                header.createCell(i).setCellValue(columnas[i]);
+                sheet.setColumnWidth(i, 5000);
+            }
+
+            // Ejemplo 1: Con SKU
+            org.apache.poi.ss.usermodel.Row fila1 = sheet.createRow(1);
+            fila1.createCell(0).setCellValue("DISTRIBUIDORA ESCOLAR");
+            fila1.createCell(1).setCellValue("7501234567890");
+            fila1.createCell(2).setCellValue("CUADERNO PROFESIONAL 100 HOJAS");
+            fila1.createCell(3).setCellValue(50);
+            fila1.createCell(4).setCellValue(28.50);
+            fila1.createCell(5).setCellValue(35.00);
+
+            // Ejemplo 2: Sin SKU (se generará automáticamente)
+            org.apache.poi.ss.usermodel.Row fila2 = sheet.createRow(2);
+            fila2.createCell(0).setCellValue("PAPELERA DEL NORTE");
+            fila2.createCell(1).setCellValue(""); // Dejar vacío
+            fila2.createCell(2).setCellValue("BOLIGRAFO BIC NEGRO");
+            fila2.createCell(3).setCellValue(100);
+            fila2.createCell(4).setCellValue(9.00);
+            fila2.createCell(5).setCellValue(12.00);
+
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
+                workbook.write(out);
+                exito("Plantilla generada correctamente.\n\n"
+                        + "Instrucciones:\n"
+                        + "1. Abre el archivo en Excel.\n"
+                        + "2. Llena tus productos (NO borres la primera fila).\n"
+                        + "3. Guarda el archivo.\n"
+                        + "4. Usa el botón 'Importar' en la app.");
+            } catch (java.io.FileNotFoundException e) {
+                alerta("No se pudo guardar el archivo porque ya está abierto en Excel.\n\n"
+                        + "Por favor, cierra el archivo y vuelve a intentarlo.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            alerta("Error al crear la plantilla:\n" + e.getMessage());
+        }
+    }
+    @FXML
+    private void verPapeleria() {
+        seccionActual = "PAPELERIA";
+        if (lblTituloModulo != null) lblTituloModulo.setText("Inventario · Papelería");
+
+        btnSeccionPapeleria.getStyleClass().removeAll("btn-ghost");
+        if (!btnSeccionPapeleria.getStyleClass().contains("btn-primary")) btnSeccionPapeleria.getStyleClass().add("btn-primary");
+        btnSeccionSkincare.getStyleClass().removeAll("btn-primary");
+        if (!btnSeccionSkincare.getStyleClass().contains("btn-ghost")) btnSeccionSkincare.getStyleClass().add("btn-ghost");
+
+        refrescar();
+    }
+
+    @FXML
+    private void verSkincare() {
+        seccionActual = "SKINCARE";
+        if (lblTituloModulo != null) lblTituloModulo.setText("Inventario · Skincare");
+
+        btnSeccionSkincare.getStyleClass().removeAll("btn-ghost");
+        if (!btnSeccionSkincare.getStyleClass().contains("btn-primary")) btnSeccionSkincare.getStyleClass().add("btn-primary");
+        btnSeccionPapeleria.getStyleClass().removeAll("btn-primary");
+        if (!btnSeccionPapeleria.getStyleClass().contains("btn-ghost")) btnSeccionPapeleria.getStyleClass().add("btn-ghost");
+
+        refrescar();
+    }
+
+    @FXML
+    private void importarProductos() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Seleccionar archivo de productos");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Archivos soportados", "*.xlsx", "*.csv"),
+                new FileChooser.ExtensionFilter("Excel", "*.xlsx"),
+                new FileChooser.ExtensionFilter("CSV", "*.csv"));
+
+        File file = fileChooser.showOpenDialog(tabla.getScene().getWindow());
+        if (file == null) return;
+
+        // Desactivar UI temporalmente
+        lblSubtitulo.setText("Importando productos, por favor espera...");
+        lblSubtitulo.setStyle("-fx-text-fill: #1E88E5; -fx-font-weight: bold;");
+
+        new Thread(() -> {
+            try {
+                org.papeleria_pos.Services.ImportadorProductos importador = new org.papeleria_pos.Services.ImportadorProductos();
+                int total = importador.importarDesdeArchivo(file.getAbsolutePath());
+
+                Platform.runLater(() -> {
+                    lblSubtitulo.setStyle("");
+                    refrescar(); // Recargar la tabla
+                    exito("¡Importación completada!\n\n"
+                            + total + " productos nuevos agregados a la base de datos.");
+                });
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Platform.runLater(() -> {
+                    lblSubtitulo.setText("✖ Error al importar: " + ex.getMessage());
+                    lblSubtitulo.setStyle("-fx-text-fill: #E53935;");
+                    alerta("Error crítico durante la importación:\n\n" + ex.getMessage());
+                });
+            }
+        }).start();
     }
 
     /** Cuando escanean un SKU existente, precarga sus datos en el modal */
@@ -387,9 +526,11 @@ public class InventarioController {
                 // 12.3 — UNA SOLA consulta según filtros
                 List<Producto> lista;
                 if (idProveedor != null) {
-                    lista = dao.buscarPorProveedor(idProveedor, filtroStockBajo);
+                    // 🔑 PASAMOS LA SECCIÓN AL DAO
+                    lista = dao.buscarPorProveedor(idProveedor, filtroStockBajo, seccionActual);
                 } else {
-                    lista = dao.buscar(filtro, idCategoria, filtroStockBajo);
+                    // 🔑 PASAMOS LA SECCIÓN AL DAO
+                    lista = dao.buscar(filtro, idCategoria, filtroStockBajo, seccionActual);
                 }
 
                 int stockBajo = dao.contarStockBajo();
@@ -483,8 +624,11 @@ public class InventarioController {
         if (pCategoria != null && p.getNombreCategoria() != null) {
             pCategoria.setValue(p.getNombreCategoria());
         }
+
+        // 🔑 CORRECCIÓN AQUÍ: Usar getNombreProveedor()
         if (pProveedor != null && p.getNombre() != null) {
-            pProveedor.setValue(p.getNombre());  // ✅ usa el dato del producto
+        } else if (pProveedor != null) {
+            pProveedor.setValue(null); // Si no tiene proveedor, dejarlo vacío
         }
 
         modoUnidad();
@@ -493,7 +637,6 @@ public class InventarioController {
         modalProducto.setVisible(true);
         modalProducto.setManaged(true);
     }
-
     @FXML
     private void cerrarModalProducto() {
         modalProducto.setVisible(false);
@@ -530,9 +673,22 @@ public class InventarioController {
         // 16.1 — Validar texto
         String sku    = pSku.getText()    != null ? pSku.getText().trim()    : "";
         String nombre = pNombre.getText() != null ? pNombre.getText().trim() : "";
-        if (sku.isEmpty() || nombre.isEmpty()) {
-            alerta("SKU y Nombre son obligatorios.");
-            return;
+        if (sku.isEmpty()) {
+            // Si el campo está vacío, generamos el código
+            String sql = "SELECT COALESCE(MAX(CAST(SUBSTRING(codigo_barras, 4, 9) AS UNSIGNED)), 0) " +
+                    "  FROM productos WHERE codigo_barras LIKE '200%'";
+            long secuencial = 1;
+            try (var st = org.papeleria_pos.config.DatabaseConnection.get().createStatement();
+                 var rs = st.executeQuery(sql)) {
+                if (rs.next()) {
+                    secuencial = rs.getLong(1) + 1;
+                }
+            } catch (Exception e) {
+                secuencial = System.currentTimeMillis() % 1_000_000_000L;
+            }
+
+            sku = BarcodeGenerator.generar(secuencial);
+            pSku.setText(sku); // Lo mostramos en pantalla para que el usuario lo vea
         }
 
         // 16.2 — Precios
@@ -587,8 +743,13 @@ public class InventarioController {
             }
         }
 
+        // 🔑 AGREGA ESTO AQUÍ:
+        System.out.println(">>> DEBUG GUARDAR: Combo dice='" + (pProveedor != null ? pProveedor.getValue() : "NULL") + "'");
+        System.out.println(">>> DEBUG GUARDAR: ID a enviar=" + idProveedor);
+
         // 16.6 — Armar Producto
         Producto prod = new Producto();
+        prod.setIdProveedor(idProveedor == null ? 0 : idProveedor);
         prod.setIdProducto(editandoId == null ? 0 : editandoId);
         prod.setSku(sku);
         prod.setNombre(nombre);
@@ -598,6 +759,7 @@ public class InventarioController {
         prod.setPrecioVenta(precioVenta);
         prod.setStockActual(stock);
         prod.setStockMinimo(stockMin);
+        prod.setTipoProducto(seccionActual);
 
         final boolean esNuevo = (editandoId == null);
 

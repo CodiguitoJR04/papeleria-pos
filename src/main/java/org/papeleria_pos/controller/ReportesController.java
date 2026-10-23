@@ -1,5 +1,11 @@
 package org.papeleria_pos.controller;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -13,6 +19,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 import org.papeleria_pos.dao.*;
 import org.papeleria_pos.dao.Interface.IMovimientoDAO;
@@ -20,6 +27,9 @@ import org.papeleria_pos.dao.Interface.IVentaDAO;
 import org.papeleria_pos.dto.*;
 import org.papeleria_pos.models.Venta;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -27,8 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-
-import static java.util.Collections.addAll;
 
 public class ReportesController {
     private final IVentaDAO     dao           = new VentaDAOImpl();
@@ -57,8 +65,6 @@ public class ReportesController {
     @SuppressWarnings("rawtypes")
     @FXML private TableView tabla;
 
-
-
     private static final NumberFormat MXN =
             NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-MX"));
     private static final DateTimeFormatter FECHA_FMT =
@@ -66,19 +72,14 @@ public class ReportesController {
 
     private String tabActivo = "ventas";
 
-    /* ============================================================
-       Init
-       ============================================================ */
+    /* ============================================================ */
     @FXML
     public void initialize() {
-        // 🔑 Elimina la columna fantasma del final
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        // ---- Filtro período ----
         cbPeriodo.getItems().addAll("Hoy", "Últimos 7 días", "Últimos 30 días", "Mes actual");
         cbPeriodo.setValue("Últimos 7 días");
 
-        // ---- Filtro cajero: cargar usernames reales desde la BD ----
         cbCajero.getItems().add("Todos");
         new Thread(() -> {
             try {
@@ -97,22 +98,18 @@ public class ReportesController {
             }
         }).start();
 
-        // ---- Filtro método ----
         cbMetodo.getItems().addAll("Todos", "EFECTIVO", "TARJETA");
         cbMetodo.setValue("Todos");
 
-        // ---- Listeners ----
+        // Escuchar cambios en los filtros para recargar TODO
         cbPeriodo.valueProperty().addListener((o, a, b) -> cargarTodo());
         cbCajero.valueProperty().addListener((o, a, b) -> cargarTodo());
         cbMetodo.valueProperty().addListener((o, a, b) -> cargarTodo());
 
-        // ---- Carga inicial ----
         cargarTodo();
     }
 
-    /* ============================================================
-       Carga general (al cambiar filtros)
-       ============================================================ */
+    /* ============================================================ */
     private void cargarTodo() {
         LocalDate[] rango = rangoActual();
         LocalDate desde = rango[0];
@@ -128,12 +125,9 @@ public class ReportesController {
         cargarKPIs(desde, hasta, ventas);
         cargarGrafica(desde, hasta, ventas);
         cargarTop(desde, hasta, ventas);
-        cargarTabla();   // 🔑 sin parámetros
+        cargarTabla();
     }
 
-    /* ============================================================
-       Filtros en memoria
-       ============================================================ */
     private List<Venta> aplicarFiltros(List<Venta> base) {
         String cajero = cbCajero != null ? cbCajero.getValue() : null;
         String metodo = cbMetodo != null ? cbMetodo.getValue() : null;
@@ -156,20 +150,12 @@ public class ReportesController {
         return new LocalDate[] { hoy.minusDays(6), hoy };
     }
 
-    /* ============================================================
-       KPIs
-       ============================================================ */
     private void cargarKPIs(LocalDate desde, LocalDate hasta, List<Venta> ventas) {
-        double total = ventas.stream()
-                .filter(v -> "COMPLETADA".equals(v.getEstado()))
-                .mapToDouble(Venta::getTotal).sum();
+        double total = ventas.stream().filter(v -> "COMPLETADA".equals(v.getEstado())).mapToDouble(Venta::getTotal).sum();
+        long tickets = ventas.stream().filter(v -> "COMPLETADA".equals(v.getEstado())).count();
 
-        long tickets = ventas.stream()
-                .filter(v -> "COMPLETADA".equals(v.getEstado()))
-                .count();
-
-        int articulos = (int) (tickets * 2.5);
-        double margen = total * 0.4;
+        int articulos = (int) (tickets * 2.5); // Estimado
+        double margen = total * 0.4;           // Estimado
         double ticket = tickets > 0 ? total / tickets : 0;
 
         kpiVentas.setText(MXN.format(total));
@@ -183,9 +169,6 @@ public class ReportesController {
         lblDeltaMargen.setText("—");
     }
 
-    /* ============================================================
-       Gráfica
-       ============================================================ */
     private void cargarGrafica(LocalDate desde, LocalDate hasta, List<Venta> ventas) {
         var mapa = new java.util.TreeMap<LocalDate, Double>();
         LocalDate cur = desde;
@@ -195,8 +178,7 @@ public class ReportesController {
         }
 
         for (Venta v : ventas) {
-            if (!"COMPLETADA".equals(v.getEstado())) continue;
-            if (v.getFecha() == null) continue;
+            if (!"COMPLETADA".equals(v.getEstado()) || v.getFecha() == null) continue;
             LocalDate d = v.getFecha().toLocalDate();
             mapa.merge(d, v.getTotal(), Double::sum);
         }
@@ -211,9 +193,6 @@ public class ReportesController {
         chartVentas.getData().setAll(serie);
     }
 
-    /* ============================================================
-       Top productos
-       ============================================================ */
     private void cargarTop(LocalDate desde, LocalDate hasta, List<Venta> ventas) {
         List<TopProducto> top = dao.obtenerTopProductos(desde, hasta, 5);
         topProductos.getChildren().clear();
@@ -228,37 +207,24 @@ public class ReportesController {
         int max = top.stream().mapToInt(TopProducto::getUnidadesVendidas).max().orElse(1);
         for (int i = 0; i < top.size(); i++) {
             TopProducto t = top.get(i);
-
-            HBox row = new HBox();
-            row.getStyleClass().add("top-item-row");
-            Label rank = new Label(String.valueOf(i + 1));
-            rank.getStyleClass().add("top-rank");
-            Label nombre = new Label(t.getNombre());
-            nombre.getStyleClass().add("top-name");
+            HBox row = new HBox(); row.getStyleClass().add("top-item-row");
+            Label rank = new Label(String.valueOf(i + 1)); rank.getStyleClass().add("top-rank");
+            Label nombre = new Label(t.getNombre()); nombre.getStyleClass().add("top-name");
             HBox.setHgrow(nombre, Priority.ALWAYS);
-            Label valor = new Label(t.getUnidadesVendidas() + " uds");
-            valor.getStyleClass().add("top-value");
+            Label valor = new Label(t.getUnidadesVendidas() + " uds"); valor.getStyleClass().add("top-value");
             row.getChildren().addAll(rank, nombre, valor);
 
-            Pane bar = new Pane();
-            bar.getStyleClass().add("top-bar");
-            bar.setMaxWidth(Double.MAX_VALUE);
-            Pane fill = new Pane();
-            fill.getStyleClass().add("top-bar-fill");
+            Pane bar = new Pane(); bar.getStyleClass().add("top-bar"); bar.setMaxWidth(Double.MAX_VALUE);
+            Pane fill = new Pane(); fill.getStyleClass().add("top-bar-fill");
             final int maxFinal = max;
-            fill.prefWidthProperty().bind(bar.widthProperty()
-                    .multiply((double) t.getUnidadesVendidas() / maxFinal));
+            fill.prefWidthProperty().bind(bar.widthProperty().multiply((double) t.getUnidadesVendidas() / maxFinal));
             bar.getChildren().add(fill);
 
-            VBox item = new VBox(row, bar);
-            item.getStyleClass().add("top-item");
+            VBox item = new VBox(row, bar); item.getStyleClass().add("top-item");
             topProductos.getChildren().add(item);
         }
     }
 
-    /* ============================================================
-       Tabla — SOLO recarga la tabla según tab activo
-       ============================================================ */
     private void cargarTabla() {
         LocalDate[] rango = rangoActual();
         List<Venta> ventasBase = dao.obtenerPorRango(rango[0], rango[1]);
@@ -272,433 +238,145 @@ public class ReportesController {
         }
     }
 
-    /* ============================================================
-   Tabla de facturas
-   ============================================================ */
+    /* ============================================================ */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void tablaFacturas(LocalDate desde, LocalDate hasta) {
+        // 🔑 LIMPIAR DATOS ANTERIORES
+        tabla.getItems().clear();
         tabla.getColumns().clear();
 
-        /* Serie-Folio */
         TableColumn<FacturaResumen, String> cFolio = new TableColumn<>("Folio");
-        cFolio.setCellValueFactory(c -> {
-            FacturaResumen f = c.getValue();
-            return new SimpleStringProperty(f.getSerie() + "-" + f.getFolio());
-        });
-        cFolio.setPrefWidth(100);
+        cFolio.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getSerieFolio()));
 
-        /* Fecha */
         TableColumn<FacturaResumen, String> cFecha = new TableColumn<>("Fecha");
-        cFecha.setCellValueFactory(c -> {
-            var fecha = c.getValue().getFecha();
-            return new SimpleStringProperty(fecha != null
-                    ? fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                    : "");
-        });
-        cFecha.setPrefWidth(120);
+        cFecha.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getFecha() != null ? c.getValue().getFecha().toString() : ""));
 
-        /* RFC */
         TableColumn<FacturaResumen, String> cRfc = new TableColumn<>("RFC");
-        cRfc.setCellValueFactory(c ->
-                    new SimpleStringProperty(c.getValue().getRfc()));
-        cRfc.setPrefWidth(140);
+        cRfc.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getRfc()));
 
-        /* Razón social */
         TableColumn<FacturaResumen, String> cRazon = new TableColumn<>("Razón social");
-        cRazon.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getRazonSocial()));
-        cRazon.setPrefWidth(260);
+        cRazon.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getRazonSocial()));
 
-        /* Total */
         TableColumn<FacturaResumen, Double> cTotal = new TableColumn<>("Total");
-        cTotal.setCellValueFactory(c ->
-                new SimpleObjectProperty<>(c.getValue().getTotal()));
-        cTotal.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(Double v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : MXN.format(v));
-                setAlignment(Pos.CENTER_RIGHT);
-            }
-        });
-        cTotal.setPrefWidth(120);
+        cTotal.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getTotal()));
+        cTotal.setCellFactory(c -> celdaMoneda());
 
-        /* Estado */
         TableColumn<FacturaResumen, String> cEstado = new TableColumn<>("Estado");
-        cEstado.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getEstado()));
-        cEstado.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(String s, boolean empty) {
-                super.updateItem(s, empty);
-                if (empty || s == null) { setGraphic(null); setText(null); return; }
-                Label badge = new Label(s);
-                badge.getStyleClass().add("badge");
-                badge.getStyleClass().add(
-                        "GENERADA".equals(s)  ? "ok"  :
-                                "CANCELADA".equals(s) ? "out" : "neutral");
-                setGraphic(badge);
-                setText(null);
-            }
-        });
-        cEstado.setPrefWidth(120);
+        cEstado.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getEstado()));
 
         tabla.getColumns().addAll(cFolio, cFecha, cRfc, cRazon, cTotal, cEstado);
 
-        /* Cargar datos */
         List<FacturaResumen> facturas = facturaDAO.listarPorRango(desde, hasta);
         tabla.setPlaceholder(new Label("Sin facturas en el período."));
         tabla.setItems(FXCollections.observableArrayList((List) facturas));
 
-        /* Resumen */
-        double totalFacturado = facturas.stream()
-                .filter(f -> "GENERADA".equals(f.getEstado()))
-                .mapToDouble(FacturaResumen::getTotal).sum();
-        lblResumen.setText(
-                facturas.size() + " facturas · Total facturado: "
-                        + MXN.format(totalFacturado));
+        double totalFacturado = facturas.stream().filter(f -> "GENERADA".equals(f.getEstado())).mapToDouble(FacturaResumen::getTotal).sum();
+        lblResumen.setText(facturas.size() + " facturas · Total facturado: " + MXN.format(totalFacturado));
     }
 
-    /* ============================================================
-   Tabla de turnos
-   ============================================================ */
-    /* ============================================================
-   Tabla de turnos
-   ============================================================ */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void tablaTurnos(LocalDate desde, LocalDate hasta) {
+        // 🔑 LIMPIAR DATOS ANTERIORES
+        tabla.getItems().clear();
         tabla.getColumns().clear();
 
-        /* Turno # */
         TableColumn<TurnoResumen, String> cTurno = new TableColumn<>("Turno");
-        cTurno.setCellValueFactory(c ->
-                new SimpleStringProperty("#" + c.getValue().getId()));
-        cTurno.setPrefWidth(90);
+        cTurno.setCellValueFactory(c -> new SimpleStringProperty("#" + c.getValue().getId()));
 
-        /* Cajero */
         TableColumn<TurnoResumen, String> cCajero = new TableColumn<>("Cajero");
-        cCajero.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getCajero()));
-        cCajero.setPrefWidth(180);
+        cCajero.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCajero()));
 
-        /* Caja */
         TableColumn<TurnoResumen, String> cCaja = new TableColumn<>("Caja");
-        cCaja.setCellValueFactory(c ->
-                new SimpleStringProperty("Caja " + c.getValue().getCaja()));
-        cCaja.setPrefWidth(80);
+        cCaja.setCellValueFactory(c -> new SimpleStringProperty("Caja " + c.getValue().getCaja()));
 
-        /* Apertura */
         TableColumn<TurnoResumen, String> cApertura = new TableColumn<>("Apertura");
-        cApertura.setCellValueFactory(c -> {
-            var f = c.getValue().getApertura();
-            return new SimpleStringProperty(f != null ? f.format(FECHA_FMT) : "");
-        });
-        cApertura.setPrefWidth(140);
+        cApertura.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getApertura() != null ? c.getValue().getApertura().format(FECHA_FMT) : ""));
 
-        /* Cierre */
-        TableColumn<TurnoResumen, String> cCierre = new TableColumn<>("Cierre");
-        cCierre.setCellValueFactory(c -> {
-            var f = c.getValue().getCierre();
-            return new SimpleStringProperty(f != null ? f.format(FECHA_FMT) : "—");
-        });
-        cCierre.setPrefWidth(140);
-
-        /* # Ventas */
-        TableColumn<TurnoResumen, Integer> cNumVentas = new TableColumn<>("Ventas");
-        cNumVentas.setCellValueFactory(c ->
-                new SimpleObjectProperty<>(c.getValue().getNumVentas()));
-        cNumVentas.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(Integer v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : v.toString());
-                setAlignment(Pos.CENTER);
-            }
-        });
-        cNumVentas.setPrefWidth(80);
-
-        /* Total ventas */
         TableColumn<TurnoResumen, Double> cTotal = new TableColumn<>("Total");
-        cTotal.setCellValueFactory(c ->
-                new SimpleObjectProperty<>(c.getValue().getTotalVentas()));
+        cTotal.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getTotalVentas()));
         cTotal.setCellFactory(c -> celdaMoneda());
-        cTotal.setPrefWidth(120);
 
-        /* Diferencia (ya viene calculada del DTO) */
-        TableColumn<TurnoResumen, Double> cDif = new TableColumn<>("Diferencia");
-        cDif.setCellValueFactory(c ->
-                new SimpleObjectProperty<>(c.getValue().getDiferencia()));
-        cDif.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(Double v, boolean empty) {
-                super.updateItem(v, empty);
-                if (empty || v == null) { setGraphic(null); setText(null); return; }
-
-                Label lbl = new Label(MXN.format(v));
-                if (Math.abs(v) < 0.01)
-                    lbl.setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: 600;");   // Cuadra
-                else if (v > 0)
-                    lbl.setStyle("-fx-text-fill: #E53935; -fx-font-weight: 600;");   // Faltante
-                else
-                    lbl.setStyle("-fx-text-fill: #F59E0B; -fx-font-weight: 600;");   // Sobrante
-                setGraphic(lbl);
-                setText(null);
-                setAlignment(Pos.CENTER_RIGHT);
-            }
-        });
-        cDif.setPrefWidth(120);
-
-        /* Estado */
         TableColumn<TurnoResumen, String> cEstado = new TableColumn<>("Estado");
-        cEstado.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getEstado()));
-        cEstado.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(String s, boolean empty) {
-                super.updateItem(s, empty);
-                if (empty || s == null) { setGraphic(null); setText(null); return; }
-                Label badge = new Label(s);
-                badge.getStyleClass().add("badge");
-                badge.getStyleClass().add(
-                        "ABIERTO".equals(s) ? "info" : "neutral");
-                setGraphic(badge);
-                setText(null);
-            }
-        });
-        cEstado.setPrefWidth    (110);
+        cEstado.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getEstado()));
 
-        tabla.getColumns().addAll(cTurno, cCajero, cCaja, cApertura, cCierre,
-                cNumVentas, cTotal, cDif, cEstado);
+        tabla.getColumns().addAll(cTurno, cCajero, cCaja, cApertura, cTotal, cEstado);
 
-        /* Cargar datos */
         List<TurnoResumen> turnos = turnoDAO.listarPorRango(desde, hasta);
         tabla.setPlaceholder(new Label("Sin turnos en el período."));
         tabla.setItems(FXCollections.observableArrayList((List) turnos));
 
-        /* Resumen */
-        long abiertos = turnos.stream().filter(t -> "ABIERTO".equals(t.getEstado())).count();
-        double totalVendido = turnos.stream().mapToDouble(TurnoResumen::getTotalVentas).sum();
-        lblResumen.setText(
-                turnos.size() + " turnos · " + abiertos + " abiertos · Total: "
-                        + MXN.format(totalVendido));
+        lblResumen.setText(turnos.size() + " turnos en el período.");
     }
 
-    /* ============================================================
-   Tabla de movimientos
-   ============================================================ */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void tablaMovimientos(LocalDate desde, LocalDate hasta) {
+        // 🔑 LIMPIAR DATOS ANTERIORES
+        tabla.getItems().clear();
         tabla.getColumns().clear();
 
-        /* Columna FECHA */
         TableColumn<MovimientoResumen, String> cFecha = new TableColumn<>("Fecha");
-        cFecha.setCellValueFactory(c -> {
-            var f = c.getValue().getFecha();
-            return new SimpleStringProperty(f != null ? f.format(FECHA_FMT) : "");
-        });
-        cFecha.setPrefWidth(140);
+        cFecha.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getFecha() != null ? c.getValue().getFecha().format(FECHA_FMT) : ""));
 
-        /* Columna PRODUCTO */
         TableColumn<MovimientoResumen, String> cProducto = new TableColumn<>("Producto");
-        cProducto.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getProducto()));
-        cProducto.setPrefWidth(240);
+        cProducto.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getProducto()));
 
-        /* Columna TIPO (badge con color) */
         TableColumn<MovimientoResumen, String> cTipo = new TableColumn<>("Tipo");
-        cTipo.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getTipo()));
-        cTipo.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(String tipo, boolean empty) {
-                super.updateItem(tipo, empty);
-                if (empty || tipo == null) { setGraphic(null); setText(null); return; }
+        cTipo.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getTipo()));
 
-                String etiqueta;
-                String clase;
-                switch (tipo) {
-                    case "SALIDA_VENTA"      -> { etiqueta = "Venta";   clase = "info"; }
-                    case "ENTRADA_COMPRA"    -> { etiqueta = "Entrada"; clase = "ok"; }
-                    case "MERMA"             -> { etiqueta = "Merma";   clase = "out"; }
-                    case "AJUSTE_INVENTARIO" -> { etiqueta = "Ajuste";  clase = "low"; }
-                    default                  -> { etiqueta = tipo;      clase = "neutral"; }
-                }
-
-                Label badge = new Label(etiqueta);
-                badge.getStyleClass().addAll("badge", clase);
-                setGraphic(badge);
-                setText(null);
-                setAlignment(Pos.CENTER_LEFT);
-            }
-        });
-        cTipo.setPrefWidth(110);
-
-        /* Columna CANTIDAD (con signo y color) */
         TableColumn<MovimientoResumen, Integer> cCantidad = new TableColumn<>("Cantidad");
-        cCantidad.setCellValueFactory(c ->
-                new SimpleObjectProperty<>(c.getValue().getCantidad()));
-        cCantidad.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(Integer cant, boolean empty) {
-                super.updateItem(cant, empty);
-                if (empty || cant == null) { setGraphic(null); setText(null); return; }
+        cCantidad.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getCantidad()));
 
-                MovimientoResumen m = getTableView().getItems().get(getIndex());
-                boolean salida = m.esSalida();
-                String texto = (salida ? "-" : "+") + cant;
-
-                Label lbl = new Label(texto);
-                lbl.setStyle(salida
-                        ? "-fx-text-fill: #E53935; -fx-font-weight: 600;"
-                        : "-fx-text-fill: #2E7D32; -fx-font-weight: 600;");
-
-                setGraphic(lbl);
-                setText(null);
-                setAlignment(Pos.CENTER_RIGHT);
-            }
-        });
-        cCantidad.setPrefWidth(90);
-
-        /* Columna MOTIVO */
         TableColumn<MovimientoResumen, String> cMotivo = new TableColumn<>("Motivo");
-        cMotivo.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getMotivo()));
-        cMotivo.setPrefWidth(280);
+        cMotivo.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getMotivo()));
 
-        /* Columna USUARIO */
-        TableColumn<MovimientoResumen, String> cUsuario = new TableColumn<>("Usuario");
-        cUsuario.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getUsuario()));
-        cUsuario.setPrefWidth(140);
+        tabla.getColumns().addAll(cFecha, cProducto, cTipo, cCantidad, cMotivo);
 
-        /* Columna REFERENCIA */
-        TableColumn<MovimientoResumen, String> cReferencia = new TableColumn<>("Referencia");
-        cReferencia.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getReferencia()));
-        cReferencia.setPrefWidth(120);
-
-        tabla.getColumns().addAll(cFecha, cProducto, cTipo, cCantidad,
-                cMotivo, cUsuario, cReferencia);
-
-        /* Cargar datos */
         List<MovimientoResumen> movimientos = movimientoDAO.listarPorRango(desde, hasta);
         tabla.setPlaceholder(new Label("Sin movimientos en el período."));
         tabla.setItems(FXCollections.observableArrayList((List) movimientos));
 
-        /* Resumen al pie */
-        long entradas  = movimientos.stream().filter(m -> !m.esSalida()).count();
-        long salidas   = movimientos.stream().filter(MovimientoResumen::esSalida).count();
-        lblResumen.setText(
-                movimientos.size() + " movimientos · "
-                        + entradas + " entradas · "
-                        + salidas + " salidas");
+        lblResumen.setText(movimientos.size() + " movimientos registrados.");
     }
 
-    /* ============================================================
-       Tabla de ventas
-
-       ============================================================ */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void tablaVentas(List<Venta> ventas) {
+        // 🔑 LIMPIAR DATOS ANTERIORES
+        tabla.getItems().clear();
         tabla.getColumns().clear();
 
         TableColumn<Venta, String> cFolio = new TableColumn<>("Folio");
-        cFolio.setCellValueFactory(c ->
-                new SimpleStringProperty("#" + c.getValue().getFolio()));
+        cFolio.setCellValueFactory(c -> new SimpleStringProperty("#" + c.getValue().getFolio()));
 
         TableColumn<Venta, String> cCajero = new TableColumn<>("Cajero");
-        cCajero.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getUsuario()));
+        cCajero.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getUsuario()));
 
         TableColumn<Venta, String> cFecha = new TableColumn<>("Fecha");
-        cFecha.setCellValueFactory(c -> {
-            var fecha = c.getValue().getFecha();
-            return new SimpleStringProperty(fecha != null ? fecha.format(FECHA_FMT) : "");
-        });
-
-        TableColumn<Venta, String> cMetodo = new TableColumn<>("Método");
-        cMetodo.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getMetodoPago()));
+        cFecha.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getFecha() != null ? c.getValue().getFecha().format(FECHA_FMT) : ""));
 
         TableColumn<Venta, Double> cTotal = new TableColumn<>("Total");
-        cTotal.setCellValueFactory(c ->
-                new SimpleObjectProperty<>(c.getValue().getTotal()));
-        cTotal.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(Double v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : MXN.format(v));
-                setStyle("-fx-alignment: CENTER-RIGHT;");
-            }
-        });
+        cTotal.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getTotal()));
+        cTotal.setCellFactory(c -> celdaMoneda());
 
-        TableColumn<Venta, String> cEstado = new TableColumn<>("Estado");
-        cEstado.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getEstado()));
-        cEstado.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(String s, boolean empty) {
-                super.updateItem(s, empty);
-                if (empty || s == null) { setGraphic(null); setText(null); return; }
-                Label badge = new Label(s);
-                badge.getStyleClass().add("badge");
-                badge.getStyleClass().add(
-                        s.equals("COMPLETADA") ? "ok" : "out");
-                setGraphic(badge);
-                setText(null);
-            }
-        });
-
-        tabla.getColumns().addAll(cFolio, cCajero, cFecha, cMetodo, cTotal, cEstado);
+        tabla.getColumns().addAll(cFolio, cCajero, cFecha, cTotal);
         tabla.setPlaceholder(new Label("Sin ventas en el período."));
         tabla.setItems(FXCollections.observableArrayList(ventas));
 
-        double totalPeriodo = ventas.stream()
-                .filter(v -> "COMPLETADA".equals(v.getEstado()))
-                .mapToDouble(Venta::getTotal).sum();
+        double totalPeriodo = ventas.stream().filter(v -> "COMPLETADA".equals(v.getEstado())).mapToDouble(Venta::getTotal).sum();
         lblResumen.setText(ventas.size() + " registros · Total: " + MXN.format(totalPeriodo));
     }
 
-    /* ============================================================
-       Tabla vacía (para tabs no implementados)
-       ============================================================ */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void tablaVacia(String mensaje) {
-        // Limpiamos las columnas dinámicas, pero mostramos placeholder
-        tabla.getColumns().clear();
-        tabla.setItems(FXCollections.observableArrayList());
-
-        Label vacio = new Label(mensaje);
-        vacio.getStyleClass().add("content-subtitle");
-        tabla.setPlaceholder(vacio);
-
-        lblResumen.setText(mensaje);
-    }
-
-    /* ============================================================
-       Tabs — SOLO recargan la tabla
-       ============================================================ */
-    @FXML private void verTabVentas() {
-        tabActivo = "ventas";
-        marcarTab(tabVentas, tabMovimientos, tabFacturas, tabTurnos);
-        cargarTabla();
-    }
-
-    @FXML private void verTabMovimientos() {
-        tabActivo = "movimientos";
-        marcarTab(tabMovimientos, tabVentas, tabFacturas, tabTurnos);
-        cargarTabla();
-    }
-
-    @FXML private void verTabFacturas() {
-        tabActivo = "facturas";
-        marcarTab(tabFacturas, tabVentas, tabMovimientos, tabTurnos);
-        cargarTabla();
-    }
-
-    @FXML private void verTabTurnos() {
-        tabActivo = "turnos";
-        marcarTab(tabTurnos, tabVentas, tabMovimientos, tabFacturas);
-        cargarTabla();
-    }
+    /* ============================================================ */
+    @FXML private void verTabVentas()      { tabActivo = "ventas";      marcarTab(tabVentas, tabMovimientos, tabFacturas, tabTurnos); cargarTabla(); }
+    @FXML private void verTabMovimientos() { tabActivo = "movimientos"; marcarTab(tabMovimientos, tabVentas, tabFacturas, tabTurnos); cargarTabla(); }
+    @FXML private void verTabFacturas()    { tabActivo = "facturas";    marcarTab(tabFacturas, tabVentas, tabMovimientos, tabTurnos); cargarTabla(); }
+    @FXML private void verTabTurnos()      { tabActivo = "turnos";      marcarTab(tabTurnos, tabVentas, tabMovimientos, tabFacturas); cargarTabla(); }
 
     private void marcarTab(Button activo, Button... otros) {
         activo.getStyleClass().remove("active");
-        if (!activo.getStyleClass().contains("active"))
-            activo.getStyleClass().add("active");
+        if (!activo.getStyleClass().contains("active")) activo.getStyleClass().add("active");
         for (Button b : otros) b.getStyleClass().remove("active");
     }
+
     private <T> TableCell<T, Double> celdaMoneda() {
         return new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -710,9 +388,125 @@ public class ReportesController {
     }
 
     /* ============================================================
-       Exportar
+       EXPORTAR CSV Y PDF
        ============================================================ */
-    @FXML private void exportarCSV() { System.out.println("→ CSV"); }
-    @FXML private void exportarPDF() { System.out.println("→ PDF"); }
-    @FXML private void imprimir()    { System.out.println("→ imprimir"); }
+    @FXML
+    private void exportarCSV() {
+        if (tabla.getItems().isEmpty()) {
+            alerta("No hay datos para exportar.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar Reporte CSV");
+        fileChooser.setInitialFileName("reporte_" + tabActivo + ".csv");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV", "*.csv"));
+
+        File file = fileChooser.showSaveDialog(tabla.getScene().getWindow());
+        if (file == null) return;
+
+        new Thread(() -> {
+            try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
+                // Cabeceras
+                StringBuilder header = new StringBuilder();
+                for (Object col : tabla.getColumns()) {
+                    TableColumn column = (TableColumn) col;
+                    header.append(column.getText()).append(",");
+                }
+                writer.println(header.toString());
+
+                // Filas
+                for (Object item : tabla.getItems()) {
+                    StringBuilder row = new StringBuilder();
+                    for (Object col : tabla.getColumns()) {
+                        TableColumn column = (TableColumn) col;
+                        Object val = column.getCellObservableValue(item).getValue();
+                        row.append(val != null ? val.toString() : "").append(",");
+                    }
+                    writer.println(row.toString());
+                }
+
+                Platform.runLater(() -> exito("Reporte CSV exportado correctamente."));
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> alerta("Error al exportar CSV:\n" + e.getMessage()));
+            }
+        }).start();
+    }
+
+    @FXML
+    private void exportarPDF() {
+        if (tabla.getItems().isEmpty()) {
+            alerta("No hay datos para exportar.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar Reporte PDF");
+        fileChooser.setInitialFileName("reporte_" + tabActivo + ".pdf");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
+
+        File file = fileChooser.showSaveDialog(tabla.getScene().getWindow());
+        if (file == null) return;
+
+        new Thread(() -> {
+            try {
+                Document document = new Document(PageSize.A4.rotate());
+                PdfWriter.getInstance(document, new FileOutputStream(file));
+                document.open();
+
+                // Título
+                com.lowagie.text.Font titleFont = new com.lowagie.text.Font(com.lowagie.text.Font.BOLD, 16);
+                document.add(new Paragraph("Reporte de " + tabActivo.toUpperCase() + " - " + LocalDate.now(), titleFont));
+                document.add(new Paragraph(" "));
+
+                // Tabla
+                PdfPTable pdfTable = new PdfPTable(tabla.getColumns().size());
+                pdfTable.setWidthPercentage(100);
+
+                // Cabeceras
+                com.lowagie.text.Font headerFont = new com.lowagie.text.Font(com.lowagie.text.Font.BOLD, 10);
+                for (Object col : tabla.getColumns()) {
+                    TableColumn column = (TableColumn) col;
+                    PdfPCell cell = new PdfPCell(new Paragraph(column.getText(), headerFont));
+                    cell.setBackgroundColor(java.awt.Color.LIGHT_GRAY);
+                    pdfTable.addCell(cell);
+                }
+
+                // Filas
+                com.lowagie.text.Font rowFont = new com.lowagie.text.Font(com.lowagie.text.Font.NORMAL, 9);
+                for (Object item : tabla.getItems()) {
+                    for (Object col : tabla.getColumns()) {
+                        TableColumn column = (TableColumn) col;
+                        Object val = column.getCellObservableValue(item).getValue();
+                        pdfTable.addCell(new PdfPCell(new Paragraph(val != null ? val.toString() : "", rowFont)));
+                    }
+                }
+
+                document.add(pdfTable);
+                document.close();
+
+                Platform.runLater(() -> exito("Reporte PDF exportado correctamente."));
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> alerta("Error al exportar PDF:\n" + e.getMessage()));
+            }
+        }).start();
+    }
+
+    @FXML private void imprimir() {
+        alerta("La función de imprimir se puede agregar después.");
+    }
+
+    private void alerta(String msg) {
+        Alert a = new Alert(Alert.AlertType.WARNING, msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.showAndWait();
+    }
+
+    private void exito(String msg) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.showAndWait();
+    }
 }

@@ -1,5 +1,7 @@
 package org.papeleria_pos.Services;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.papeleria_pos.config.DatabaseConnection;
 import org.papeleria_pos.dao.ProductoDAOImpl;
 import org.papeleria_pos.dao.ProveedorDAOImpl;
@@ -8,6 +10,7 @@ import org.papeleria_pos.models.Producto;
 import org.papeleria_pos.models.Proveedor;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
@@ -17,74 +20,117 @@ public class ImportadorProductos {
     private final ProveedorDAOImpl provDAO = new ProveedorDAOImpl();
     private final ProductoDAOImpl  prodDAO = new ProductoDAOImpl();
 
-    public int importarDesdeCSV(String ruta) throws Exception {
-        int importados = 0, omitidos = 0, errores = 0;
+    public int importarDesdeArchivo(String ruta) throws Exception {
+        if (ruta.toLowerCase().endsWith(".csv")) {
+            return importarCSV(ruta);
+        } else if (ruta.toLowerCase().endsWith(".xlsx") || ruta.toLowerCase().endsWith(".xls")) {
+            return importarExcel(ruta);
+        } else {
+            throw new Exception("Formato no soportado. Usa .csv o .xlsx");
+        }
+    }
 
+    /* ============================================================
+       IMPORTAR DESDE CSV (Ahora espera 6 columnas)
+       ============================================================ */
+    private int importarCSV(String ruta) throws Exception {
+        int importados = 0;
         try (BufferedReader br = new BufferedReader(
                 new FileReader(ruta, StandardCharsets.UTF_8))) {
 
             String linea = br.readLine();   // saltar encabezado
             while ((linea = br.readLine()) != null) {
                 if (linea.isBlank()) continue;
+                String[] c = linea.split(",", -1);
 
-                try {
-                    String[] c = linea.split(",", -1);
-                    if (c.length < 5) { errores++; continue; }
-
-                    String proveedor = c[0].trim();
-                    String nombre    = c[1].trim();
-                    int    stock     = Integer.parseInt(c[2].trim());
-                    double costo     = Double.parseDouble(c[3].trim());
-                    double venta     = Double.parseDouble(c[4].trim());
-
-                    // 1) Resolver/crear proveedor
-                    int idProveedor = resolverProveedor(proveedor);
-
-                    // 2) ¿Ya existe el producto?
-                    if (existeProducto(nombre)) {
-                        System.out.println("⏭ Ya existe: " + nombre);
-                        omitidos++;
-                        continue;
-                    }
-
-                    // 3) Generar código de barras único
-                    String codigo = BarcodeGenerator.generar(siguienteSecuencial());
-
-                    // 4) Crear el producto
-                    Producto p = new Producto();
-                    p.setIdProducto(0);
-                    p.setSku(codigo);
-                    p.setNombre(nombre);
-                    p.setIdCategoria(idCategoriaPorDefecto());
-                    p.setIdProveedor(idProveedor);
-                    p.setPrecioCompra(costo);
-                    p.setPrecioVenta(venta);
-                    p.setStockActual(stock);
-                    p.setStockMinimo(5);
-
-                    int id = prodDAO.insertar(p);
-                    if (id > 0) {
+                // Esperamos: proveedor, sku, producto, stock, costo, venta
+                if (c.length >= 6) {
+                    if (procesarFila(c[0].trim(), c[1].trim(), c[2].trim(), c[3].trim(), c[4].trim(), c[5].trim())) {
                         importados++;
-                        System.out.printf("✔ [%s] %s → %s%n", proveedor, nombre, codigo);
-                    } else {
-                        errores++;
                     }
-
-                } catch (Exception e) {
-                    System.err.println("⚠ Error en línea: " + linea + " → " + e.getMessage());
-                    errores++;
                 }
             }
         }
-
-        System.out.printf("Importados: %d · Omitidos: %d · Errores: %d%n",
-                importados, omitidos, errores);
         return importados;
     }
 
     /* ============================================================
-       Helpers
+       IMPORTAR DESDE EXCEL (Ahora lee 6 columnas)
        ============================================================ */
+    private int importarExcel(String ruta) throws Exception {
+        int importados = 0;
+        try (FileInputStream fis = new FileInputStream(ruta);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            DataFormatter formatter = new DataFormatter();
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                // 0: Proveedor | 1: SKU | 2: Producto | 3: Stock | 4: Costo | 5: Venta
+                String prov   = formatter.formatCellValue(row.getCell(0)).trim();
+                String sku    = formatter.formatCellValue(row.getCell(1)).trim();
+                String nombre = formatter.formatCellValue(row.getCell(2)).trim();
+                String stock  = formatter.formatCellValue(row.getCell(3)).trim();
+                String costo  = formatter.formatCellValue(row.getCell(4)).trim();
+                String venta  = formatter.formatCellValue(row.getCell(5)).trim();
+
+                if (!prov.isEmpty() && !nombre.isEmpty()) {
+                    if (procesarFila(prov, sku, nombre, stock, costo, venta)) {
+                        importados++;
+                    }
+                }
+            }
+        }
+        return importados;
+    }
+
+    /* ============================================================
+       PROCESAR FILA (Lógica compartida)
+       ============================================================ */
+    private boolean procesarFila(String proveedor, String skuStr, String nombre, String stockStr, String costoStr, String ventaStr) {
+        try {
+            int    stock = (int) Double.parseDouble(stockStr);
+            double costo = Double.parseDouble(costoStr);
+            double venta = Double.parseDouble(ventaStr);
+
+            int idProveedor = resolverProveedor(proveedor);
+
+            if (existeProducto(nombre)) {
+                System.out.println("⏭ Ya existe: " + nombre);
+                return false;
+            }
+
+            // Generación automática si el SKU viene vacío
+            String codigo = skuStr;
+            if (codigo == null || codigo.trim().isEmpty()) {
+                codigo = BarcodeGenerator.generar(siguienteSecuencial());
+            }
+
+            Producto p = new Producto();
+            p.setIdProducto(0);
+            p.setSku(codigo);
+            p.setNombre(nombre);
+            p.setIdCategoria(idCategoriaPorDefecto());
+            p.setIdProveedor(idProveedor);
+            p.setPrecioCompra(costo);
+            p.setPrecioVenta(venta);
+            p.setStockActual(stock);
+            p.setStockMinimo(5);
+
+            int id = prodDAO.insertar(p);
+            if (id > 0) {
+                System.out.printf("✔ [%s] %s → %s%n", proveedor, nombre, codigo);
+                return true;
+            }
+        } catch (Exception e) {
+            System.err.println("⚠ Error procesando: " + nombre + " -> " + e.getMessage());
+        }
+        return false;
+    }
+
     private int resolverProveedor(String nombre) {
         Proveedor p = provDAO.buscarPorNombre(nombre);
         if (p != null) return p.getIdProveedor();
@@ -128,8 +174,7 @@ public class ImportadorProductos {
         } catch (Exception ignored) {}
 
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(
-                "INSERT INTO categorias (nombre, descripcion, activa) " +
-                        "VALUES ('Sin categoría', 'Importación masiva', 1)",
+                "INSERT INTO categorias (nombre, descripcion, activo) VALUES ('Sin categoría', 'Importación masiva', 1)",
                 Statement.RETURN_GENERATED_KEYS)) {
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {

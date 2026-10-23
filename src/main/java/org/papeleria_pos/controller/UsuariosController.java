@@ -170,7 +170,8 @@ public class UsuariosController {
         modalUsuario.setManaged(false);
     }
 
-    @FXML private void guardar() {
+    @FXML
+    private void guardar() {
         String nombre = usrNombre.getText().trim();
         String username = usrUsername.getText().trim();
         String pass = usrPassword.getText();
@@ -186,15 +187,40 @@ public class UsuariosController {
             return;
         }
 
-        if (editandoId == null) {
-            dao.insertar(nombre, username, pass, rol, activo);
-        } else {
-            // Si no escribieron nueva contraseña, conservar la anterior
-            String passFinal = (pass == null || pass.isEmpty()) ? obtenerPassword(editandoId) : pass;
-            dao.actualizar(editandoId, nombre, username, passFinal, rol, activo);
+        try {
+            boolean resultado = false;
+
+            if (editandoId == null) {
+                // MODO CREAR
+                resultado = dao.insertar(nombre, username, pass, rol, activo);
+                if (resultado) {
+                    exito("Usuario \"" + nombre + "\" creado correctamente.");
+                }
+            } else {
+                // MODO EDITAR
+                String passFinal = (pass == null || pass.isEmpty()) ? obtenerPassword(editandoId) : pass;
+                resultado = dao.actualizar(editandoId, nombre, username, passFinal, rol, activo);
+                if (resultado) {
+                    exito("Usuario \"" + nombre + "\" actualizado correctamente.");
+                }
+            }
+
+            if (resultado) {
+                cerrarModal();
+                refrescar();
+            } else {
+                alerta("No se pudo guardar el usuario. Intenta de nuevo.");
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // Aquí atrapamos errores como "El username ya existe" (Duplicate entry)
+            if (ex.getMessage().contains("Duplicate entry")) {
+                alerta("El nombre de usuario '@" + username + "' ya está en uso.\nPor favor, elige otro.");
+            } else {
+                alerta("Error al guardar en la base de datos:\n" + ex.getMessage());
+            }
         }
-        cerrarModal();
-        refrescar();
     }
 
     /** Obtiene el password actual desde la BD (para no sobreescribirlo). */
@@ -229,5 +255,18 @@ public class UsuariosController {
                 ButtonType.OK, ButtonType.CANCEL);
         a.setHeaderText(null);
         return a.showAndWait().filter(b -> b == ButtonType.OK).isPresent();
+    }
+    private void exito(String msg) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.setTitle("Listo");
+        a.showAndWait();
+    }
+
+    private void error(String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.setTitle("Error");
+        a.showAndWait();
     }
 }

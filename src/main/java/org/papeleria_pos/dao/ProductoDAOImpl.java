@@ -67,6 +67,45 @@ public class ProductoDAOImpl implements IProductoDAO {
                 "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
                         "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
                         "       id_proveedor " +                                    // 🔑 agregado
+                        "  FROM producto WHERE activo = 1 AND tipo_producto = 'PAPELERIA' ");
+
+        List<Object> params = new ArrayList<>();
+
+        if (filtro != null && !filtro.isEmpty()) {
+            sql.append(" AND (LOWER(nombre) LIKE ? OR sku LIKE ?) ");
+            String f = "%" + filtro.toLowerCase() + "%";
+            params.add(f);
+            params.add("%" + filtro + "%");
+        }
+        if (idCategoria != null) {
+            sql.append(" AND id_categoria = ? ");
+            params.add(idCategoria);
+        }
+        if (soloStockBajo != null && soloStockBajo) {
+            sql.append(" AND stock_actual <= stock_minimo ");
+        }
+
+        sql.append(" ORDER BY nombre");
+
+        List<Producto> lista = new ArrayList<>();
+        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapear(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error listando productos: " + e.getMessage(), e);
+        }
+        return lista;
+    }
+    @Override
+    public List<Producto> buscar(String filtro, Integer idCategoria, Boolean soloStockBajo, String tipoProducto) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
+                        "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
+                        "       id_proveedor, tipo_producto " +
                         "  FROM producto WHERE activo = 1 ");
 
         List<Object> params = new ArrayList<>();
@@ -83,6 +122,11 @@ public class ProductoDAOImpl implements IProductoDAO {
         }
         if (soloStockBajo != null && soloStockBajo) {
             sql.append(" AND stock_actual <= stock_minimo ");
+        }
+        // 🔑 FILTRO POR TIPO DE PRODUCTO
+        if (tipoProducto != null && !tipoProducto.isEmpty()) {
+            sql.append(" AND tipo_producto = ? ");
+            params.add(tipoProducto);
         }
 
         sql.append(" ORDER BY nombre");
@@ -210,6 +254,7 @@ public class ProductoDAOImpl implements IProductoDAO {
 
             // 🔑 El 9no es el WHERE
             ps.setInt   (9, p.getIdProducto());
+            System.out.println(">>> DEBUG DAO: Guardando producto ID " + p.getIdProducto() + " con Proveedor ID " + p.getIdProveedor());
 
             return ps.executeUpdate() > 0;
 
@@ -287,7 +332,7 @@ public class ProductoDAOImpl implements IProductoDAO {
                 "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
                         "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
                         "       id_proveedor " +
-                        "  FROM producto WHERE activo = 1 AND id_proveedor = ? ");
+                        "  FROM producto WHERE activo = 1 AND id_proveedor = ? AND tipo_producto = 'PAPELERIA' ");
         if (soloStockBajo != null && soloStockBajo) {
             sql.append(" AND stock_actual <= stock_minimo ");
         }
@@ -304,6 +349,36 @@ public class ProductoDAOImpl implements IProductoDAO {
         }
         return lista;
     }
+    @Override
+    public List<Producto> buscarPorProveedor(int idProveedor, Boolean soloStockBajo, String tipoProducto) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
+                        "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
+                        "       id_proveedor, tipo_producto " +
+                        "  FROM producto WHERE activo = 1 AND id_proveedor = ? ");
+        if (soloStockBajo != null && soloStockBajo) {
+            sql.append(" AND stock_actual <= stock_minimo ");
+        }
+        if (tipoProducto != null && !tipoProducto.isEmpty()) {
+            sql.append(" AND tipo_producto = ? ");
+        }
+        sql.append(" ORDER BY nombre");
+
+        List<Producto> lista = new ArrayList<>();
+        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql.toString())) {
+            ps.setInt(1, idProveedor);
+            if (tipoProducto != null && !tipoProducto.isEmpty()) {
+                ps.setString(2, tipoProducto);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapear(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error filtrando por proveedor: " + e.getMessage(), e);
+        }
+        return lista;
+    }
+
 
     /* ============================================================
        Mapeo común
@@ -321,6 +396,7 @@ public class ProductoDAOImpl implements IProductoDAO {
         p.setStockMinimo(rs.getInt("stock_minimo"));
         p.setIdProveedor(rs.getInt("id_proveedor"));   // 🔑 NUEVO
         p.setActivo(rs.getInt("activo") == 1);
+        p.setTipoProducto(rs.getString("tipo_producto"));
         return p;
     }
 }

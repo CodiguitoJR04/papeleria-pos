@@ -193,7 +193,7 @@ public class FacturaDAOImpl implements IFacturaDAO {
                             rs.getString("razon_social"),
                             rs.getDouble("total"),
                             rs.getString("estado"),
-                            rs.getInt("folio_venta")));
+                            rs.getString("folio_venta")));
                 }
             }
         } catch (SQLException e) {
