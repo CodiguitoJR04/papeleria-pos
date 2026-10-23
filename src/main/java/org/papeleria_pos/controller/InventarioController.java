@@ -99,7 +99,7 @@ public class InventarioController {
        ============================================================ */
     @FXML
     public void initialize() {
-        // 5.1 — Tabla principal
+        // 5.1 — Tabla principalf
         configurarTabla();
 
         // 5.2 — Filtros reactivos
@@ -329,6 +329,7 @@ public class InventarioController {
         if (!btnSeccionPapeleria.getStyleClass().contains("btn-ghost")) btnSeccionPapeleria.getStyleClass().add("btn-ghost");
 
         refrescar();
+        System.out.println(seccionActual);
     }
 
     @FXML
@@ -630,6 +631,9 @@ public class InventarioController {
         } else if (pProveedor != null) {
             pProveedor.setValue(null); // Si no tiene proveedor, dejarlo vacío
         }
+        if (p.getTipoProducto() != null) {
+            seccionActual = p.getTipoProducto();
+        }
 
         modoUnidad();
         calcularMargen();
@@ -795,6 +799,7 @@ public class InventarioController {
                         alerta("Error al guardar:\n\n" + ex.getMessage()));
             }
         }).start();
+        System.out.println("Valor seccion"+seccionActual);
     }
 
     /* ============================================================
