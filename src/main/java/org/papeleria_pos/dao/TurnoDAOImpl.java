@@ -14,28 +14,14 @@ import java.util.List;
 
 public class TurnoDAOImpl implements ITurnoDAO {
 
-    private static final DateTimeFormatter FMT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-    @Override
-    public int contarAbiertos() {
-        String sql = "SELECT COUNT(*) FROM turnos WHERE estado = 'ABIERTO'";
-        try (Statement st = DatabaseConnection.get().createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            return rs.next() ? rs.getInt(1) : 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en contarAbiertos: " + e.getMessage(), e);
-        }
-    }
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public TurnoAbierto obtenerTurnoAbierto(int idCajero) {
-        String sql =
-                "SELECT t.id_turno, t.id_cajero, u.nombre AS cajero, " +
-                        "       t.fecha_inicio, t.monto_inicial " +
-                        "  FROM turnos t JOIN usuarios u ON u.id_usuario = t.id_cajero " +
-                        " WHERE t.id_cajero = ? AND t.estado = 'ABIERTO' " +
-                        " ORDER BY t.fecha_inicio DESC LIMIT 1";
+        String sql = "SELECT t.id_turno, t.id_cajero, u.nombre AS cajero, t.fecha_inicio, t.monto_inicial " +
+                "  FROM turnos t JOIN usuarios u ON u.id_usuario = t.id_cajero " +
+                " WHERE t.id_cajero = ? AND t.estado = 'ABIERTO' " +
+                " ORDER BY t.fecha_inicio DESC LIMIT 1";
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
             ps.setInt(1, idCajero);
             try (ResultSet rs = ps.executeQuery()) {
@@ -57,11 +43,9 @@ public class TurnoDAOImpl implements ITurnoDAO {
 
     @Override
     public int abrirTurno(int idCajero, int caja, double montoInicial) {
-        String sql = "INSERT INTO turnos " +
-                "(id_cajero, fecha_inicio, monto_inicial, total_ventas, estado) " +
+        String sql = "INSERT INTO turnos (id_cajero, fecha_inicio, monto_inicial, total_ventas, estado) " +
                 "VALUES (?, NOW(), ?, 0, 'ABIERTO')";
-        try (PreparedStatement ps = DatabaseConnection.get()
-                .prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, idCajero);
             ps.setDouble(2, montoInicial);
             ps.executeUpdate();
@@ -74,30 +58,46 @@ public class TurnoDAOImpl implements ITurnoDAO {
     }
 
     @Override
-    public boolean cerrarTurno(int idTurno, double montoFinal) {
-        String sql = "UPDATE turnos SET fecha_fin = NOW(), monto_final_efectivo = ?, " +
-                "estado = 'CERRADO' WHERE id_turno = ?";
+    public double calcularEfectivoEsperado(int idTurno) {
+        // Suma el monto inicial + todas las ventas pagadas en EFECTIVO
+        String sql = "SELECT t.monto_inicial + COALESCE(SUM(p.monto), 0) " +
+                "  FROM turnos t " +
+                "  LEFT JOIN ventas v ON v.id_turno = t.id_turno AND v.estado = 'COMPLETADA' " +
+                "  LEFT JOIN pagos_venta p ON p.id_venta = v.id_venta AND p.tipo_pago = 'EFECTIVO' " +
+                " WHERE t.id_turno = ? GROUP BY t.id_turno";
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
-            ps.setDouble(1, montoFinal);
-            ps.setInt(2, idTurno);
+            ps.setInt(1, idTurno);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0;
+            }
+        } catch (SQLException e) {
+            return 0;
+        }
+    }
+
+    @Override
+    public boolean cerrarTurno(int idTurno, double montoEsperado, double montoContado, double diferencia) {
+        String sql = "UPDATE turnos SET fecha_fin = NOW(), monto_final_efectivo = ?, " +
+                "monto_esperado = ?, diferencia = ?, estado = 'CERRADO' WHERE id_turno = ?";
+        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+            ps.setDouble(1, montoContado);
+            ps.setDouble(2, montoEsperado);
+            ps.setDouble(3, diferencia);
+            ps.setInt(4, idTurno);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new RuntimeException("Error cerrando turno: " + e.getMessage(), e);
         }
     }
+
     @Override
     public List<TurnoResumen> listarPorRango(LocalDate desde, LocalDate hasta) {
-        String sql =
-                "SELECT t.id_turno, t.id_cajero, u.nombre AS cajero, " +
-                        "       t.fecha_inicio, t.fecha_fin, " +
-                        "       t.monto_inicial, t.monto_final_efectivo, " +
-                        "       t.total_ventas, t.estado, " +
-                        "       (SELECT COUNT(*) FROM ventas v WHERE v.id_turno = t.id_turno) AS num_ventas " +
-                        "  FROM turnos t " +
-                        "  LEFT JOIN usuarios u ON u.id_usuario = t.id_cajero " +
-                        " WHERE DATE(t.fecha_inicio) BETWEEN ? AND ? " +
-                        " ORDER BY t.fecha_inicio DESC";
-
+        String sql = "SELECT t.id_turno, t.id_cajero, u.nombre AS cajero, " +
+                "       t.fecha_inicio, t.fecha_fin, t.monto_inicial, t.monto_final_efectivo, " +
+                "       t.total_ventas, t.monto_esperado, t.diferencia, t.estado, " +
+                "       (SELECT COUNT(*) FROM ventas v WHERE v.id_turno = t.id_turno) AS num_ventas " +
+                "  FROM turnos t LEFT JOIN usuarios u ON u.id_usuario = t.id_cajero " +
+                " WHERE DATE(t.fecha_inicio) BETWEEN ? AND ? ORDER BY t.fecha_inicio DESC";
         List<TurnoResumen> lista = new ArrayList<>();
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
             ps.setString(1, desde.toString());
@@ -106,32 +106,35 @@ public class TurnoDAOImpl implements ITurnoDAO {
                 while (rs.next()) {
                     Timestamp ini = rs.getTimestamp("fecha_inicio");
                     Timestamp fin = rs.getTimestamp("fecha_fin");
-
-                    double inicial = rs.getDouble("monto_inicial");
-                    double finalEf = rs.getDouble("monto_final_efectivo");
-                    double totalV  = rs.getDouble("total_ventas");
-
-                    // diferencia = lo que debería haber - lo que hay
-                    //            = (inicial + ventas) - finalEfectivo
-                    double dif = (inicial + totalV) - finalEf;
-
                     lista.add(new TurnoResumen(
                             rs.getInt("id_turno"),
-                            1,                                    // caja (hardcode por ahora)
+                            1,
                             rs.getString("cajero"),
                             ini != null ? ini.toLocalDateTime() : null,
                             fin != null ? fin.toLocalDateTime() : null,
                             rs.getInt("num_ventas"),
-                            totalV,
-                            dif,
+                            rs.getDouble("monto_inicial"),
+                            rs.getDouble("total_ventas"),
+                            rs.getDouble("monto_esperado"),
+                            rs.getDouble("monto_final_efectivo"),
+                            rs.getDouble("diferencia"),
                             rs.getString("estado")
                     ));
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException(
-                    "Error listando turnos: " + e.getMessage(), e);
+            throw new RuntimeException("Error listando turnos: " + e.getMessage(), e);
         }
         return lista;
+    }
+    @Override
+    public int contarAbiertos() {
+        String sql = "SELECT COUNT(*) FROM turnos WHERE estado = 'ABIERTO'";
+        try (Statement st = DatabaseConnection.get().createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            return rs.next() ? rs.getInt(1) : 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en contarAbiertos: " + e.getMessage(), e);
+        }
     }
 }

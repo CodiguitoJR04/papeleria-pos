@@ -238,14 +238,16 @@ public class ProductoDAOImpl implements IProductoDAO {
     /* ============================================================
        Eliminar
        ============================================================ */
+    // En ProductoDAOImpl.java
     @Override
     public boolean eliminar(int idProducto) {
-        String sql = "DELETE FROM productos WHERE id_producto = ?";
+        // 🔑 Borrado Lógico: lo desactiva en vez de borrarlo
+        String sql = "UPDATE productos SET activo = 0 WHERE id_producto = ?";
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
             ps.setInt(1, idProducto);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Error al eliminar producto: " + e.getMessage(), e);
+            throw new RuntimeException("Error al desactivar producto: " + e.getMessage(), e);
         }
     }
 

@@ -16,17 +16,36 @@ public class VentaDAOImpl implements IVentaDAO {
        ============================================================ */
     @Override
     public List<Venta> obtenerPorFecha(LocalDate fecha) {
+        // En la vista 'venta', la columna se llama 'fecha'
         String sql = "SELECT * FROM venta WHERE DATE(fecha) = ? ORDER BY fecha DESC";
         return ejecutarVentas(sql, fecha.toString());
     }
 
     @Override
     public List<Venta> obtenerPorRango(LocalDate desde, LocalDate hasta) {
-        String sql = "SELECT * FROM venta WHERE DATE(fecha) BETWEEN ? AND ? ORDER BY fecha";
+        return obtenerPorRango(desde, hasta, null);
+    }
+
+    @Override
+    public List<Venta> obtenerPorRango(LocalDate desde, LocalDate hasta, String tipoProducto) {
+        String sql;
+        if (tipoProducto == null || "Todos".equals(tipoProducto)) {
+            // Usamos la vista 'venta'
+            sql = "SELECT * FROM venta WHERE DATE(fecha) BETWEEN ? AND ? ORDER BY fecha";
+        } else {
+            // Para el JOIN usamos la tabla real 'ventas' que tiene 'fecha_hora'
+            sql = "SELECT DISTINCT v.* FROM venta v " +
+                    " JOIN detalle_ventas dv ON v.id_venta = dv.id_venta " +
+                    " JOIN productos p ON dv.id_producto = p.id_producto " +
+                    " WHERE DATE(v.fecha) BETWEEN ? AND ? AND p.tipo_producto = ? ORDER BY v.fecha";
+        }
         List<Venta> lista = new ArrayList<>();
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
             ps.setString(1, desde.toString());
             ps.setString(2, hasta.toString());
+            if (tipoProducto != null && !"Todos".equals(tipoProducto)) {
+                ps.setString(3, tipoProducto);
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapear(rs));
             }
@@ -76,34 +95,36 @@ public class VentaDAOImpl implements IVentaDAO {
 
     @Override
     public List<TopProducto> obtenerTopProductos(LocalDate desde, LocalDate hasta, int limite) {
-        String sql =
-                "SELECT p.id_producto, p.nombre, " +
-                        "       SUM(dv.cantidad) AS unidades, SUM(dv.importe) AS importe " +
-                        "  FROM detalle_venta dv " +
-                        "  JOIN venta v ON v.id_venta = dv.id_venta " +
-                        "  JOIN producto p ON p.id_producto = dv.id_producto " +
-                        " WHERE v.estado = 'COMPLETADA' " +
-                        "   AND DATE(v.fecha) BETWEEN DATE(?) AND DATE(?) " +
-                        " GROUP BY p.id_producto, p.nombre " +
-                        " ORDER BY unidades DESC LIMIT ?";
+        return obtenerTopProductos(desde, hasta, limite, null);
+    }
+
+    @Override
+    public List<TopProducto> obtenerTopProductos(LocalDate desde, LocalDate hasta, int limite, String tipoProducto) {
+        // 🔑 Cambiado dv.importe por dv.subtotal y v.fecha por v.fecha_hora
+        String sql = "SELECT p.id_producto, p.nombre, SUM(dv.cantidad) AS unidades, SUM(dv.subtotal) AS importe " +
+                "  FROM detalle_ventas dv JOIN ventas v ON v.id_venta = dv.id_venta " +
+                "  JOIN productos p ON p.id_producto = dv.id_producto " +
+                " WHERE v.estado = 'COMPLETADA' AND DATE(v.fecha_hora) BETWEEN ? AND ? ";
+        if (tipoProducto != null && !"Todos".equals(tipoProducto)) {
+            sql += " AND p.tipo_producto = ? ";
+        }
+        sql += " GROUP BY p.id_producto, p.nombre ORDER BY unidades DESC LIMIT ?";
 
         List<TopProducto> lista = new ArrayList<>();
         try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
             ps.setString(1, desde.toString());
             ps.setString(2, hasta.toString());
-            ps.setInt(3, limite);
+            int idx = 3;
+            if (tipoProducto != null && !"Todos".equals(tipoProducto)) {
+                ps.setString(idx++, tipoProducto);
+            }
+            ps.setInt(idx, limite);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(new TopProducto(
-                            rs.getInt("id_producto"),
-                            rs.getString("nombre"),
-                            rs.getInt("unidades"),
-                            rs.getDouble("importe")));
+                    lista.add(new TopProducto(rs.getInt("id_producto"), rs.getString("nombre"), rs.getInt("unidades"), rs.getDouble("importe")));
                 }
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en obtenerTopProductos: " + e.getMessage(), e);
-        }
+        } catch (SQLException e) { throw new RuntimeException("Error en obtenerTopProductos: " + e.getMessage(), e); }
         return lista;
     }
 
@@ -205,7 +226,17 @@ public class VentaDAOImpl implements IVentaDAO {
     private Venta mapear(ResultSet rs) throws SQLException {
         Venta v = new Venta();
         v.setIdVenta(rs.getInt("id_venta"));
-        v.setFolio(rs.getInt("folio"));
+        // Convertimos el folio a Int porque el DTO Venta lo espera así
+        try {
+            v.setFolio(rs.getInt("folio"));
+        } catch (Exception e) {
+            // Si el folio tiene letras (F-2026-00001), extraemos solo los números
+            String f = rs.getString("folio");
+            if (f != null) {
+                v.setFolio(Integer.parseInt(f.replaceAll("[^0-9]", "")));
+            }
+        }
+
         Timestamp ts = rs.getTimestamp("fecha");
         if (ts != null) v.setFecha(ts.toLocalDateTime());
         v.setIdUsuario(rs.getInt("id_usuario"));
@@ -282,7 +313,7 @@ public class VentaDAOImpl implements IVentaDAO {
             ps.setInt(2, idCajero);
             ps.setInt(3, cantidad);
             ps.setString(4, "Venta " + folio);
-            ps.setString(5, folio);                        // 🔑 la referencia = folio
+            ps.setString(5, folio);
             ps.executeUpdate();
         }
     }
@@ -300,5 +331,32 @@ public class VentaDAOImpl implements IVentaDAO {
             ps.setDouble(5, Math.max(0, recibido - total));
             ps.executeUpdate();
         }
+    }
+
+    @Override
+    public int contarArticulosVendidos(LocalDate desde, LocalDate hasta, String tipoProducto) {
+        // 🔑 Cambiado v.fecha por v.fecha_hora
+        String sql = "SELECT COALESCE(SUM(dv.cantidad), 0) FROM detalle_ventas dv " +
+                " JOIN ventas v ON v.id_venta = dv.id_venta " +
+                " JOIN productos p ON p.id_producto = dv.id_producto " +
+                " WHERE v.estado = 'COMPLETADA' AND DATE(v.fecha_hora) BETWEEN ? AND ? ";
+        if (tipoProducto != null && !"Todos".equals(tipoProducto)) {
+            sql += " AND p.tipo_producto = ? ";
+        }
+        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+            ps.setString(1, desde.toString());
+            ps.setString(2, hasta.toString());
+            if (tipoProducto != null && !"Todos".equals(tipoProducto)) {
+                ps.setString(3, tipoProducto);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) { return 0; }
+    }
+
+    @Override
+    public int contarArticulosVendidos(LocalDate desde, LocalDate hasta) {
+        return contarArticulosVendidos(desde, hasta, null);
     }
 }

@@ -8,9 +8,12 @@ import java.util.List;
 
 public interface ITurnoDAO {
 
-    int contarAbiertos();
+
+
     TurnoAbierto obtenerTurnoAbierto(int idCajero);
     int abrirTurno(int idCajero, int caja, double montoInicial);
-    boolean cerrarTurno(int idTurno, double montoFinal);
+    boolean cerrarTurno(int idTurno, double montoEsperado, double montoContado, double diferencia);
+    double calcularEfectivoEsperado(int idTurno);
     List<TurnoResumen> listarPorRango(LocalDate desde, LocalDate hasta);
+    int contarAbiertos();
 }

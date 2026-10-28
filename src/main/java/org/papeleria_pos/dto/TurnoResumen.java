@@ -9,32 +9,41 @@ public class TurnoResumen {
     private final LocalDateTime apertura;
     private final LocalDateTime cierre;
     private final int numVentas;
+    private final double montoInicial;
     private final double totalVentas;
+    private final double montoEsperado;
+    private final double montoFinal;
     private final double diferencia;
     private final String estado;
 
     public TurnoResumen(int id, int caja, String cajero,
                         LocalDateTime apertura, LocalDateTime cierre,
-                        int numVentas, double totalVentas,
-                        double diferencia, String estado) {
+                        int numVentas, double montoInicial, double totalVentas,
+                        double montoEsperado, double montoFinal, double diferencia, String estado) {
         this.id = id;
         this.caja = caja;
         this.cajero = cajero;
         this.apertura = apertura;
         this.cierre = cierre;
         this.numVentas = numVentas;
+        this.montoInicial = montoInicial;
         this.totalVentas = totalVentas;
+        this.montoEsperado = montoEsperado;
+        this.montoFinal = montoFinal;
         this.diferencia = diferencia;
         this.estado = estado;
     }
 
-    public int getId()                  { return id; }
-    public int getCaja()                { return caja; }
-    public String getCajero()           { return cajero; }
-    public LocalDateTime getApertura()  { return apertura; }
-    public LocalDateTime getCierre()    { return cierre; }
-    public int getNumVentas()           { return numVentas; }
-    public double getTotalVentas()      { return totalVentas; }
-    public double getDiferencia()       { return diferencia; }
-    public String getEstado()           { return estado; }
+    public int getId() { return id; }
+    public int getCaja() { return caja; }
+    public String getCajero() { return cajero; }
+    public LocalDateTime getApertura() { return apertura; }
+    public LocalDateTime getCierre() { return cierre; }
+    public int getNumVentas() { return numVentas; }
+    public double getMontoInicial() { return montoInicial; }
+    public double getTotalVentas() { return totalVentas; }
+    public double getMontoEsperado() { return montoEsperado; }
+    public double getMontoFinal() { return montoFinal; }
+    public double getDiferencia() { return diferencia; }
+    public String getEstado() { return estado; }
 }

@@ -5,7 +5,9 @@ import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
@@ -44,7 +46,18 @@ public class MainController {
     @FXML private void irReportes()   { mostrar("reportes",   navReportes); }
     @FXML private void irUsuarios()   { mostrar("usuarios",   navUsuarios); }
     @FXML private void irProveedores() {mostrar("proveedores", navProveedores);}
-    @FXML private void cerrarSesion() { /* TODO */ }
+    @FXML
+    private void cerrarSesion() {
+        Alert a = new Alert(Alert.AlertType.CONFIRMATION,
+                "¿Cerrar sesión actual?", ButtonType.YES, ButtonType.NO);
+        a.setHeaderText(null);
+        if (a.showAndWait().filter(b -> b == ButtonType.YES).isPresent()) {
+            // 1. Limpiar la sesión global
+            org.papeleria_pos.session.Sesion.get().cerrar();
+            // 2. Redirigir al Login
+            org.papeleria_pos.App.getInstance().mostrarLogin();
+        }
+    }
 
     private void mostrar(String vista, Button botonActivo) {
         String archivo = "/org/papeleria_pos/fxml/" + vista.toLowerCase() + ".fxml";
@@ -83,6 +96,7 @@ public class MainController {
             navCategorias.setVisible(false); navCategorias.setManaged(false);
         }
     }
+
     public void navegarA(String seccion) {
         if (seccion == null) return;
         switch (seccion) {
