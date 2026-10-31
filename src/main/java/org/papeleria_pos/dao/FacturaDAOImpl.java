@@ -13,9 +13,6 @@ import java.util.List;
 
 public class FacturaDAOImpl implements IFacturaDAO {
 
-    /* ============================================================
-       Generar factura (transacción)
-       ============================================================ */
     @Override
     public Factura generar(FacturaRequest req) {
         Connection conn = null;
@@ -23,7 +20,6 @@ public class FacturaDAOImpl implements IFacturaDAO {
             conn = DatabaseConnection.get();
             conn.setAutoCommit(false);
 
-            // 1) Datos fiscales de la venta
             double subtotal = 0, iva = 0, total = 0;
             String sqlV = "SELECT subtotal, iva, total FROM ventas WHERE id_venta = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlV)) {
@@ -39,22 +35,16 @@ public class FacturaDAOImpl implements IFacturaDAO {
                 }
             }
 
-            // 2) Cliente (crear/reutilizar por RFC)
-            int idCliente = obtenerOCrearCliente(conn,
-                    req.getRfcReceptor(), req.getRazonSocial());
-
-            // 3) Siguiente folio para la serie "A"
+            int idCliente = obtenerOCrearCliente(conn, req.getRfcReceptor(), req.getRazonSocial());
             int folio = siguienteFolio(conn, "A");
 
-            // 4) Insertar factura
             String sql = "INSERT INTO facturas " +
                     "(id_venta, id_cliente, serie, folio, rfc_receptor, razon_social, " +
                     " regimen_fiscal, uso_cfdi, subtotal, iva, total, metodo_pago, " +
                     " fecha_emision, estado) " +
                     "VALUES (?, ?, 'A', ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'GENERADA')";
 
-            try (PreparedStatement ps = conn.prepareStatement(sql,
-                    Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, req.getIdVenta());
                 ps.setInt(2, idCliente);
                 ps.setInt(3, folio);
@@ -97,13 +87,15 @@ public class FacturaDAOImpl implements IFacturaDAO {
             if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
             throw new RuntimeException("Error generando factura: " + e.getMessage(), e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close(); // 🔑 Cerramos conexión
+                } catch (SQLException ignored) {}
+            }
         }
     }
 
-    /* ============================================================
-       Obtener / crear cliente por RFC
-       ============================================================ */
     private int obtenerOCrearCliente(Connection conn, String rfc, String razon) throws SQLException {
         String sqlSelect = "SELECT id_cliente FROM clientes WHERE rfc = ?";
         try (PreparedStatement ps = conn.prepareStatement(sqlSelect)) {
@@ -113,8 +105,7 @@ public class FacturaDAOImpl implements IFacturaDAO {
             }
         }
         String sqlInsert = "INSERT INTO clientes (nombre, rfc, es_mayorista) VALUES (?, ?, FALSE)";
-        try (PreparedStatement ps = conn.prepareStatement(sqlInsert,
-                Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, razon);
             ps.setString(2, rfc);
             ps.executeUpdate();
@@ -124,9 +115,6 @@ public class FacturaDAOImpl implements IFacturaDAO {
         }
     }
 
-    /* ============================================================
-       Siguiente folio por serie
-       ============================================================ */
     private int siguienteFolio(Connection conn, String serie) throws SQLException {
         String sql = "SELECT COALESCE(MAX(folio), 0) + 1 FROM facturas WHERE serie = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -137,13 +125,11 @@ public class FacturaDAOImpl implements IFacturaDAO {
         }
     }
 
-    /* ============================================================
-       Consultas
-       ============================================================ */
     @Override
     public Factura obtenerPorVenta(int idVenta) {
         String sql = "SELECT * FROM facturas WHERE id_venta = ? LIMIT 1";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idVenta);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapear(rs) : null;
@@ -156,7 +142,8 @@ public class FacturaDAOImpl implements IFacturaDAO {
     @Override
     public Factura obtenerPorId(int idFactura) {
         String sql = "SELECT * FROM facturas WHERE id_factura = ?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idFactura);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapear(rs) : null;
@@ -168,17 +155,17 @@ public class FacturaDAOImpl implements IFacturaDAO {
 
     @Override
     public List<FacturaResumen> listarPorRango(LocalDate desde, LocalDate hasta) {
-        String sql =
-                "SELECT f.id_factura, f.serie, f.folio, f.fecha_emision, " +
-                        "       f.rfc_receptor, f.razon_social, f.total, f.estado, " +
-                        "       v.folio AS folio_venta " +
-                        "  FROM facturas f " +
-                        "  JOIN ventas v ON v.id_venta = f.id_venta " +
-                        " WHERE DATE(f.fecha_emision) BETWEEN ? AND ? " +
-                        " ORDER BY f.fecha_emision DESC";
+        String sql = "SELECT f.id_factura, f.serie, f.folio, f.fecha_emision, " +
+                "       f.rfc_receptor, f.razon_social, f.total, f.estado, " +
+                "       v.folio AS folio_venta " +
+                "  FROM facturas f " +
+                "  JOIN ventas v ON v.id_venta = f.id_venta " +
+                " WHERE DATE(f.fecha_emision) BETWEEN ? AND ? " +
+                " ORDER BY f.fecha_emision DESC";
 
         List<FacturaResumen> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, desde.toString());
             ps.setString(2, hasta.toString());
             try (ResultSet rs = ps.executeQuery()) {
@@ -205,7 +192,8 @@ public class FacturaDAOImpl implements IFacturaDAO {
     @Override
     public boolean cancelar(int idFactura) {
         String sql = "UPDATE facturas SET estado = 'CANCELADA' WHERE id_factura = ?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idFactura);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -217,7 +205,8 @@ public class FacturaDAOImpl implements IFacturaDAO {
     public int contarPorRango(LocalDate desde, LocalDate hasta) {
         String sql = "SELECT COUNT(*) FROM facturas " +
                 "WHERE DATE(fecha_emision) BETWEEN ? AND ?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, desde.toString());
             ps.setString(2, hasta.toString());
             try (ResultSet rs = ps.executeQuery()) {
@@ -228,9 +217,6 @@ public class FacturaDAOImpl implements IFacturaDAO {
         }
     }
 
-    /* ============================================================
-       Mapeo
-       ============================================================ */
     private Factura mapear(ResultSet rs) throws SQLException {
         Factura f = new Factura();
         f.setIdFactura(rs.getInt("id_factura"));

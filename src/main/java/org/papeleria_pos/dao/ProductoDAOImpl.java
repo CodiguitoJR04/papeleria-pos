@@ -10,43 +10,40 @@ import java.util.List;
 
 public class ProductoDAOImpl implements IProductoDAO {
 
-    /* ============================================================
-       Listar todos
-       ============================================================ */
     @Override
     public List<Producto> listarTodos() {
-        // Pasamos null en tipoProducto para traer Papelería y Skincare
         return buscar(null, null, null, null);
     }
 
-    /* ============================================================
-       Búsqueda simple
-       ============================================================ */
     @Override
     public List<Producto> buscarCoincidencias(String query, int limite) {
         if (query == null || query.trim().isEmpty()) return List.of();
 
-        String sql =
-                "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
-                        "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
-                        "       id_proveedor, tipo_producto " +
-                        "  FROM producto " +
-                        " WHERE activo = 1 AND ( " +
-                        "       LOWER(nombre) LIKE ? " +
-                        "    OR sku LIKE ? " +
-                        "    OR LOWER(nombre_categoria) LIKE ? " +
-                        "    OR CAST(precio_venta AS CHAR) LIKE ? " +
-                        " ) " +
-                        " ORDER BY nombre LIMIT ?";
+        String sql = "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
+                "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
+                "       id_proveedor, tipo_producto " +
+                "  FROM producto " +
+                " WHERE activo = 1 AND ( " +
+                "       LOWER(nombre) LIKE ? " +
+                "    OR sku LIKE ? " +
+                "    OR LOWER(nombre_categoria) LIKE ? " +
+                "    OR CAST(precio_venta AS CHAR) LIKE ? " +
+                " ) " +
+                " ORDER BY nombre LIMIT ?";
 
         String like = "%" + query.trim().toLowerCase() + "%";
         List<Producto> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+
+        // 🔑 Abrimos y cerramos la conexión automáticamente
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, like);
             ps.setString(2, "%" + query.trim() + "%");
             ps.setString(3, like);
             ps.setString(4, "%" + query.trim() + "%");
             ps.setInt(5, limite);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapear(rs));
             }
@@ -61,12 +58,8 @@ public class ProductoDAOImpl implements IProductoDAO {
         return buscar(filtro, null, null, null);
     }
 
-    /* ============================================================
-       Búsqueda completa con filtros (Usada por el Inventario)
-       ============================================================ */
     @Override
     public List<Producto> buscar(String filtro, Integer idCategoria, Boolean soloStockBajo) {
-        // Este método es usado por el POS, así que no filtramos por tipo (trae todo)
         return buscar(filtro, idCategoria, soloStockBajo, null);
     }
 
@@ -93,7 +86,6 @@ public class ProductoDAOImpl implements IProductoDAO {
         if (soloStockBajo != null && soloStockBajo) {
             sql.append(" AND stock_actual <= stock_minimo ");
         }
-        // Filtro por tipo de producto (Papelería / Skincare)
         if (tipoProducto != null && !tipoProducto.isEmpty()) {
             sql.append(" AND tipo_producto = ? ");
             params.add(tipoProducto);
@@ -102,7 +94,9 @@ public class ProductoDAOImpl implements IProductoDAO {
         sql.append(" ORDER BY nombre");
 
         List<Producto> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql.toString())) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -115,13 +109,11 @@ public class ProductoDAOImpl implements IProductoDAO {
         return lista;
     }
 
-    /* ============================================================
-       Contadores y alertas
-       ============================================================ */
     @Override
     public int contarStockBajo() {
         String sql = "SELECT COUNT(*) FROM producto WHERE activo = 1 AND stock_actual <= stock_minimo";
-        try (Statement st = DatabaseConnection.get().createStatement();
+        try (Connection conn = DatabaseConnection.get();
+             Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             return rs.next() ? rs.getInt(1) : 0;
         } catch (SQLException e) {
@@ -136,17 +128,17 @@ public class ProductoDAOImpl implements IProductoDAO {
 
     @Override
     public List<Producto> obtenerAlertasStock(int limite) {
-        String sql =
-                "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
-                        "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
-                        "       id_proveedor, tipo_producto " +
-                        "  FROM producto " +
-                        " WHERE activo = 1 AND stock_actual <= stock_minimo " +
-                        " ORDER BY (stock_actual * 1.0 / NULLIF(stock_minimo, 0)) ASC " +
-                        " LIMIT ?";
+        String sql = "SELECT id_producto, sku, nombre, id_categoria, nombre_categoria, " +
+                "       precio_compra, precio_venta, stock_actual, stock_minimo, activo, " +
+                "       id_proveedor, tipo_producto " +
+                "  FROM producto " +
+                " WHERE activo = 1 AND stock_actual <= stock_minimo " +
+                " ORDER BY (stock_actual * 1.0 / NULLIF(stock_minimo, 0)) ASC " +
+                " LIMIT ?";
 
         List<Producto> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, limite);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapear(rs));
@@ -157,19 +149,15 @@ public class ProductoDAOImpl implements IProductoDAO {
         return lista;
     }
 
-    /* ============================================================
-       Insertar
-       ============================================================ */
     @Override
     public int insertar(Producto p) {
-        String sql =
-                "INSERT INTO productos " +
-                        "   (codigo_barras, nombre, id_categoria, id_proveedor, " +
-                        "    precio_mayoreo, precio_menudeo, stock_actual, stock_minimo, tipo_producto) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO productos " +
+                "   (codigo_barras, nombre, id_categoria, id_proveedor, " +
+                "    precio_mayoreo, precio_menudeo, stock_actual, stock_minimo, tipo_producto) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (PreparedStatement ps = DatabaseConnection.get()
-                .prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, p.getSku());
             ps.setString(2, p.getNombre());
@@ -193,25 +181,22 @@ public class ProductoDAOImpl implements IProductoDAO {
         }
     }
 
-    /* ============================================================
-       Actualizar
-       ============================================================ */
     @Override
     public boolean actualizar(Producto p) {
-        String sql =
-                "UPDATE productos SET " +
-                        " codigo_barras  = ?, " +
-                        " nombre         = ?, " +
-                        " id_categoria   = ?, " +
-                        " id_proveedor   = ?, " +
-                        " precio_mayoreo = ?, " +
-                        " precio_menudeo = ?, " +
-                        " stock_actual   = ?, " +
-                        " stock_minimo   = ?, " +
-                        " tipo_producto  = ?  " +
-                        " WHERE id_producto = ?";
+        String sql = "UPDATE productos SET " +
+                " codigo_barras  = ?, " +
+                " nombre         = ?, " +
+                " id_categoria   = ?, " +
+                " id_proveedor   = ?, " +
+                " precio_mayoreo = ?, " +
+                " precio_menudeo = ?, " +
+                " stock_actual   = ?, " +
+                " stock_minimo   = ?, " +
+                " tipo_producto  = ?  " +
+                " WHERE id_producto = ?";
 
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, p.getSku());
             ps.setString(2, p.getNombre());
@@ -226,24 +211,19 @@ public class ProductoDAOImpl implements IProductoDAO {
             ps.setInt   (8, p.getStockMinimo());
             ps.setString(9, p.getTipoProducto() != null ? p.getTipoProducto() : "PAPELERIA");
 
-            ps.setInt   (10, p.getIdProducto()); // 🔑 Índice 10 para el WHERE
+            ps.setInt   (10, p.getIdProducto());
 
             return ps.executeUpdate() > 0;
-
         } catch (SQLException e) {
             throw new RuntimeException("Error al actualizar producto: " + e.getMessage(), e);
         }
     }
 
-    /* ============================================================
-       Eliminar
-       ============================================================ */
-    // En ProductoDAOImpl.java
     @Override
     public boolean eliminar(int idProducto) {
-        // 🔑 Borrado Lógico: lo desactiva en vez de borrarlo
         String sql = "UPDATE productos SET activo = 0 WHERE id_producto = ?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idProducto);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -251,13 +231,11 @@ public class ProductoDAOImpl implements IProductoDAO {
         }
     }
 
-    /* ============================================================
-       Resolver id_categoria
-       ============================================================ */
     @Override
     public Integer obtenerIdCategoriaPorNombre(String nombre) {
         String sql = "SELECT id_categoria FROM categorias WHERE nombre = ?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getInt(1) : null;
@@ -268,9 +246,6 @@ public class ProductoDAOImpl implements IProductoDAO {
         }
     }
 
-    /* ============================================================
-       Filtros por Proveedor
-       ============================================================ */
     @Override
     public List<Producto> listarPorProveedor(int idProveedor, boolean soloStockBajo) {
         return buscarPorProveedor(idProveedor, soloStockBajo, null);
@@ -298,7 +273,9 @@ public class ProductoDAOImpl implements IProductoDAO {
         sql.append(" ORDER BY nombre");
 
         List<Producto> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql.toString())) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
             ps.setInt(1, idProveedor);
             if (tipoProducto != null && !tipoProducto.isEmpty()) {
                 ps.setString(2, tipoProducto);
@@ -312,9 +289,6 @@ public class ProductoDAOImpl implements IProductoDAO {
         return lista;
     }
 
-    /* ============================================================
-       Mapeo común (Limpio)
-       ============================================================ */
     private Producto mapear(ResultSet rs) throws SQLException {
         Producto p = new Producto();
         p.setIdProducto(rs.getInt("id_producto"));
@@ -332,7 +306,7 @@ public class ProductoDAOImpl implements IProductoDAO {
         try {
             p.setTipoProducto(rs.getString("tipo_producto"));
         } catch (SQLException e) {
-            p.setTipoProducto("PAPELERIA"); // Fallback de seguridad
+            p.setTipoProducto("PAPELERIA");
         }
 
         return p;

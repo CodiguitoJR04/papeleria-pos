@@ -6,11 +6,8 @@ import java.sql.SQLException;
 
 public final class DatabaseConnection {
 
-    /* ============================================================
-       Configuración MySQL (local)
-       ============================================================ */
     private static final String HOST     = "localhost";
-    private static final String PORT     = "3306";              // ⚠️ verifica tu puerto
+    private static final String PORT     = "3306";
     private static final String DATABASE = "papeleria_pos";
     private static final String USER     = "root";
     private static final String PASSWORD = "1234";
@@ -24,39 +21,26 @@ public final class DatabaseConnection {
                     "&characterEncoding=UTF-8" +
                     "&zeroDateTimeBehavior=convertToNull";
 
-    private static Connection conexion;
-
-    /* Constructor privado — clase utilitaria, no se instancia */
     private DatabaseConnection() {}
 
     /**
-     * Devuelve la conexión activa. La crea si no existe o si se cerró.
-     * Thread-safe gracias a {@code synchronized}.
+     * Devuelve una NUEVA conexión a la base de datos.
+     * Es responsabilidad del DAO cerrarla (conn.close()).
      */
-    public static synchronized Connection get() throws SQLException {
-        if (conexion == null || conexion.isClosed()) {
-            try {
-                // Carga explícita del driver (evita "No suitable driver" en algunos IDEs)
-                Class.forName("com.mysql.cj.jdbc.Driver");
-            } catch (ClassNotFoundException e) {
-                throw new SQLException(
-                        "Driver MySQL no encontrado. Verifica la dependencia mysql-connector-java en pom.xml", e);
-            }
-            conexion = DriverManager.getConnection(URL, USER, PASSWORD);
+    public static Connection get() throws SQLException {
+        try {
+            // Carga del driver (solo se ejecuta una vez en memoria, no afecta el rendimiento)
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver MySQL no encontrado.", e);
         }
-        System.out.println("Estado de la conexion"+conexion);
-        return conexion;
+
+        // 🔑 MAGIA: Retornamos una conexión NUEVA e independiente cada vez
+        return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 
-    /** Cierra la conexión si está abierta. */
-    public static synchronized void cerrar() {
-        try {
-            if (conexion != null && !conexion.isClosed()) {
-                conexion.close();
-            }
-        } catch (SQLException ignored) {
-            // silencioso a propósito
-        }
-        conexion = null;
-    }
+    /*
+     * Ya no necesitas el método cerrar() aquí porque cada DAO
+     * cerrará su propia conexión.
+     */
 }

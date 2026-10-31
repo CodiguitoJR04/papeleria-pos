@@ -11,12 +11,8 @@ import java.util.*;
 
 public class VentaDAOImpl implements IVentaDAO {
 
-    /* ============================================================
-       DASHBOARD / REPORTES
-       ============================================================ */
     @Override
     public List<Venta> obtenerPorFecha(LocalDate fecha) {
-        // En la vista 'venta', la columna se llama 'fecha'
         String sql = "SELECT * FROM venta WHERE DATE(fecha) = ? ORDER BY fecha DESC";
         return ejecutarVentas(sql, fecha.toString());
     }
@@ -30,17 +26,16 @@ public class VentaDAOImpl implements IVentaDAO {
     public List<Venta> obtenerPorRango(LocalDate desde, LocalDate hasta, String tipoProducto) {
         String sql;
         if (tipoProducto == null || "Todos".equals(tipoProducto)) {
-            // Usamos la vista 'venta'
             sql = "SELECT * FROM venta WHERE DATE(fecha) BETWEEN ? AND ? ORDER BY fecha";
         } else {
-            // Para el JOIN usamos la tabla real 'ventas' que tiene 'fecha_hora'
             sql = "SELECT DISTINCT v.* FROM venta v " +
                     " JOIN detalle_ventas dv ON v.id_venta = dv.id_venta " +
                     " JOIN productos p ON dv.id_producto = p.id_producto " +
                     " WHERE DATE(v.fecha) BETWEEN ? AND ? AND p.tipo_producto = ? ORDER BY v.fecha";
         }
         List<Venta> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, desde.toString());
             ps.setString(2, hasta.toString());
             if (tipoProducto != null && !"Todos".equals(tipoProducto)) {
@@ -59,7 +54,8 @@ public class VentaDAOImpl implements IVentaDAO {
     public List<Venta> obtenerUltimas(int limite) {
         String sql = "SELECT * FROM venta ORDER BY fecha DESC LIMIT ?";
         List<Venta> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, limite);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapear(rs));
@@ -75,7 +71,8 @@ public class VentaDAOImpl implements IVentaDAO {
         String sql = "SELECT folio, usuario, fecha, total, estado FROM venta " +
                 "ORDER BY fecha DESC LIMIT ?";
         List<VentaReciente> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, limite);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -100,7 +97,6 @@ public class VentaDAOImpl implements IVentaDAO {
 
     @Override
     public List<TopProducto> obtenerTopProductos(LocalDate desde, LocalDate hasta, int limite, String tipoProducto) {
-        // 🔑 Cambiado dv.importe por dv.subtotal y v.fecha por v.fecha_hora
         String sql = "SELECT p.id_producto, p.nombre, SUM(dv.cantidad) AS unidades, SUM(dv.subtotal) AS importe " +
                 "  FROM detalle_ventas dv JOIN ventas v ON v.id_venta = dv.id_venta " +
                 "  JOIN productos p ON p.id_producto = dv.id_producto " +
@@ -111,7 +107,8 @@ public class VentaDAOImpl implements IVentaDAO {
         sql += " GROUP BY p.id_producto, p.nombre ORDER BY unidades DESC LIMIT ?";
 
         List<TopProducto> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, desde.toString());
             ps.setString(2, hasta.toString());
             int idx = 3;
@@ -131,13 +128,13 @@ public class VentaDAOImpl implements IVentaDAO {
     @Override
     public List<VentaDia> obtenerVentasPorDia(LocalDate hasta, int dias) {
         LocalDate desde = hasta.minusDays(dias - 1L);
-        String sql =
-                "SELECT DATE(fecha) AS d, COALESCE(SUM(total), 0) AS total " +
-                        "  FROM venta WHERE estado = 'COMPLETADA' " +
-                        "   AND DATE(fecha) BETWEEN DATE(?) AND DATE(?) GROUP BY DATE(fecha)";
+        String sql = "SELECT DATE(fecha) AS d, COALESCE(SUM(total), 0) AS total " +
+                "  FROM venta WHERE estado = 'COMPLETADA' " +
+                "   AND DATE(fecha) BETWEEN DATE(?) AND DATE(?) GROUP BY DATE(fecha)";
 
         Map<LocalDate, Double> mapa = new HashMap<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, desde.toString());
             ps.setString(2, hasta.toString());
             try (ResultSet rs = ps.executeQuery()) {
@@ -156,10 +153,6 @@ public class VentaDAOImpl implements IVentaDAO {
         }
         return resultado;
     }
-
-    /* ============================================================
-       POS — REGISTRAR VENTA COMPLETA (transacción)
-       ============================================================ */
 
     @Override
     public String registrarVentaCompleta(VentaRequest req) {
@@ -190,14 +183,20 @@ public class VentaDAOImpl implements IVentaDAO {
             if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
             throw new RuntimeException("Error registrando venta: " + e.getMessage(), e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close(); // 🔑 Cerramos la conexión de la transacción
+                } catch (SQLException ignored) {}
+            }
         }
     }
 
     @Override
     public boolean hayStock(int idProducto, int cantidad) {
         String sql = "SELECT stock_actual FROM productos WHERE id_producto = ?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idProducto);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) >= cantidad;
@@ -207,12 +206,10 @@ public class VentaDAOImpl implements IVentaDAO {
         }
     }
 
-    /* ============================================================
-       Helpers internos
-       ============================================================ */
     private List<Venta> ejecutarVentas(String sql, String param) {
         List<Venta> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, param);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapear(rs));
@@ -226,11 +223,9 @@ public class VentaDAOImpl implements IVentaDAO {
     private Venta mapear(ResultSet rs) throws SQLException {
         Venta v = new Venta();
         v.setIdVenta(rs.getInt("id_venta"));
-        // Convertimos el folio a Int porque el DTO Venta lo espera así
         try {
             v.setFolio(rs.getInt("folio"));
         } catch (Exception e) {
-            // Si el folio tiene letras (F-2026-00001), extraemos solo los números
             String f = rs.getString("folio");
             if (f != null) {
                 v.setFolio(Integer.parseInt(f.replaceAll("[^0-9]", "")));
@@ -263,8 +258,7 @@ public class VentaDAOImpl implements IVentaDAO {
         String sql = "INSERT INTO ventas " +
                 "(folio, fecha_hora, subtotal, iva, total, estado, id_cajero, id_turno) " +
                 "VALUES (?, NOW(), ?, ?, ?, 'COMPLETADA', ?, ?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql,
-                Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, folio);
             ps.setDouble(2, sub);
             ps.setDouble(3, iva);
@@ -278,8 +272,7 @@ public class VentaDAOImpl implements IVentaDAO {
         }
     }
 
-    private void insertarDetalle(Connection conn, int idVenta, ItemCarrito it)
-            throws SQLException {
+    private void insertarDetalle(Connection conn, int idVenta, ItemCarrito it) throws SQLException {
         String sql = "INSERT INTO detalle_ventas " +
                 "(id_venta, id_producto, cantidad, precio_unitario_snapshot, subtotal) " +
                 "VALUES (?, ?, ?, ?, ?)";
@@ -293,8 +286,7 @@ public class VentaDAOImpl implements IVentaDAO {
         }
     }
 
-    private void descontarStock(Connection conn, int idProducto, int cantidad)
-            throws SQLException {
+    private void descontarStock(Connection conn, int idProducto, int cantidad) throws SQLException {
         String sql = "UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cantidad);
@@ -335,7 +327,6 @@ public class VentaDAOImpl implements IVentaDAO {
 
     @Override
     public int contarArticulosVendidos(LocalDate desde, LocalDate hasta, String tipoProducto) {
-        // 🔑 Cambiado v.fecha por v.fecha_hora
         String sql = "SELECT COALESCE(SUM(dv.cantidad), 0) FROM detalle_ventas dv " +
                 " JOIN ventas v ON v.id_venta = dv.id_venta " +
                 " JOIN productos p ON p.id_producto = dv.id_producto " +
@@ -343,7 +334,8 @@ public class VentaDAOImpl implements IVentaDAO {
         if (tipoProducto != null && !"Todos".equals(tipoProducto)) {
             sql += " AND p.tipo_producto = ? ";
         }
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, desde.toString());
             ps.setString(2, hasta.toString());
             if (tipoProducto != null && !"Todos".equals(tipoProducto)) {
