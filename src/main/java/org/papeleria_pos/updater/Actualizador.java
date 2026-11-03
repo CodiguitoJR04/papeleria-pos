@@ -241,15 +241,29 @@ public class Actualizador {
 
     private static void ejecutarInstalador(Path exe) {
         try {
-            // Ejecuta el instalador y cierra la app.
-            // El instalador (WiX) sobreescribe la versión anterior por el mismo winUpgradeUuid.
-            new ProcessBuilder(exe.toAbsolutePath().toString())
-                    .start();
+            // 1. Creamos un script VBScript temporal que se ejecutará de forma invisible
+            Path vbs = Files.createTempFile("lanzar-update-", ".vbs");
+
+            // El script espera 3 segundos (para que Java libere los .jar),
+            // luego pide permisos de Admin ("runas") y ejecuta el instalador.
+            String script =
+                    "Set UAC = CreateObject(\"Shell.Application\")\n" +
+                            "WScript.Sleep 3000\n" +
+                            "UAC.ShellExecute \"" + exe.toAbsolutePath().toString().replace("\\", "\\\\") + "\", \"\", \"\", \"runas\", 1\n";
+
+            Files.writeString(vbs, script);
+
+            // 2. Ejecutamos el VBS con wscript.exe (que no muestra ventana negra)
+            new ProcessBuilder("wscript.exe", vbs.toAbsolutePath().toString()).start();
+
+            // 3. Cerramos nuestra app de forma limpia
             Platform.exit();
             System.exit(0);
+
         } catch (Exception e) {
+            e.printStackTrace();
             Alert err = new Alert(Alert.AlertType.ERROR,
-                    "No se pudo ejecutar el instalador:\n" + e.getMessage());
+                    "No se pudo preparar el instalador:\n" + e.getMessage());
             err.setHeaderText(null);
             err.showAndWait();
         }

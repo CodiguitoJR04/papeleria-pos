@@ -327,7 +327,14 @@ public class PuntoDeVentaController {
     private void realizarCorteCaja() {
         if (turnoActual == null) return;
 
-        double esperado = turnoDAO.calcularEfectivoEsperado(turnoActual.getIdTurno());
+        double esperado;
+        try {
+            esperado = turnoDAO.calcularEfectivoEsperado(turnoActual.getIdTurno());
+        } catch (Exception e) {
+            alerta("Error al calcular el efectivo esperado:\n" + e.getMessage());
+            return;
+        }
+
         TextInputDialog dlg = new TextInputDialog(String.format(Locale.US, "%.2f", esperado));
         dlg.setTitle("Corte de Caja - Turno #" + turnoActual.getIdTurno());
         dlg.setHeaderText("Efectivo Esperado en Caja: " + MXN.format(esperado) +
@@ -335,10 +342,21 @@ public class PuntoDeVentaController {
         dlg.setContentText("Efectivo Contado:");
 
         dlg.showAndWait().ifPresent(montoStr -> {
+            double contado;
             try {
-                double contado = parseMonto(montoStr);
-                double diferencia = contado - esperado;
+                contado = parseMonto(montoStr);
+                // Validación extra: Si parseMonto devuelve 0 pero el string no era "0", es error.
+                if (contado == 0 && !montoStr.trim().equals("0") && !montoStr.trim().equals("0.00")) {
+                    throw new NumberFormatException();
+                }
+            } catch (Exception e) {
+                alerta("El monto ingresado no tiene un formato numérico válido.");
+                return;
+            }
 
+            double diferencia = contado - esperado;
+
+            try {
                 boolean exito = turnoDAO.cerrarTurno(turnoActual.getIdTurno(), esperado, contado, diferencia);
 
                 if (exito) {
@@ -351,9 +369,13 @@ public class PuntoDeVentaController {
                     Sesion.get().cerrar();
                     org.papeleria_pos.App.getInstance().mostrarLogin();
                 } else {
-                    alerta("Error al cerrar el turno en la base de datos.");
+                    alerta("No se pudo cerrar el turno. (¿Ya estaba cerrado en otro lado?)");
                 }
-            } catch (Exception ex) { alerta("Monto inválido."); }
+            } catch (Exception ex) {
+                // 🔑 AQUÍ VERÁS EL ERROR REAL
+                ex.printStackTrace();
+                alerta("Error de Base de Datos al cerrar el turno:\n" + ex.getMessage());
+            }
         });
     }
 

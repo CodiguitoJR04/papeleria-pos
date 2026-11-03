@@ -12,27 +12,26 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
 
     @Override
     public List<CategoriaResumen> listarTodas() {
-        String sql =
-                "SELECT c.id_categoria, c.nombre, c.descripcion, c.activo, " +
-                        "       (SELECT COUNT(*) FROM productos p " +
-                        "         WHERE p.id_categoria = c.id_categoria) AS num_productos " +
-                        "  FROM categorias c ORDER BY c.nombre";
+        String sql = "SELECT c.id_categoria, c.nombre, c.descripcion, c.activo, " +
+                "       (SELECT COUNT(*) FROM productos p " +
+                "         WHERE p.id_categoria = c.id_categoria) AS num_productos " +
+                "  FROM categorias c ORDER BY c.nombre";
         return ejecutar(sql, null);
     }
 
     @Override
     public List<CategoriaResumen> buscar(String filtro) {
-        String sql =
-                "SELECT c.id_categoria, c.nombre, c.descripcion, c.activo, " +
-                        "       (SELECT COUNT(*) FROM productos p " +
-                        "         WHERE p.id_categoria = c.id_categoria) AS num_productos " +
-                        "  FROM categorias c WHERE LOWER(c.nombre) LIKE ? ORDER BY c.nombre";
+        String sql = "SELECT c.id_categoria, c.nombre, c.descripcion, c.activo, " +
+                "       (SELECT COUNT(*) FROM productos p " +
+                "         WHERE p.id_categoria = c.id_categoria) AS num_productos " +
+                "  FROM categorias c WHERE LOWER(c.nombre) LIKE ? ORDER BY c.nombre";
         return ejecutar(sql, filtro == null ? null : "%" + filtro.toLowerCase() + "%");
     }
 
     private List<CategoriaResumen> ejecutar(String sql, String filtro) {
         List<CategoriaResumen> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             if (filtro != null) ps.setString(1, filtro);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -53,7 +52,8 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
     @Override
     public boolean insertar(String nombre, String descripcion, boolean activa) {
         String sql = "INSERT INTO categorias (nombre, descripcion, activo) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, descripcion);
             ps.setInt(3, activa ? 1 : 0);
@@ -66,7 +66,8 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
     @Override
     public boolean actualizar(int id, String nombre, String descripcion, boolean activa) {
         String sql = "UPDATE categorias SET nombre=?, descripcion=?, activo=? WHERE id_categoria=?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, descripcion);
             ps.setInt(3, activa ? 1 : 0);
@@ -80,7 +81,8 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
     @Override
     public boolean eliminar(int id) {
         String sql = "DELETE FROM categorias WHERE id_categoria=?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -91,11 +93,12 @@ public class CategoriaDAOImpl implements ICategoriaDAO {
     @Override
     public int contarActivas() {
         String sql = "SELECT COUNT(*) FROM categorias WHERE activo = 1";
-        try (Statement st = DatabaseConnection.get().createStatement();
+        try (Connection conn = DatabaseConnection.get();
+             Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             return rs.next() ? rs.getInt(1) : 0;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error contando categorías activas: " + e.getMessage(), e);
         }
     }
 }

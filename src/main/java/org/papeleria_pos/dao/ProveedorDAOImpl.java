@@ -28,7 +28,8 @@ public class ProveedorDAOImpl implements IProvedorDAO {
     public Proveedor buscarPorId(int id) {
         String sql = "SELECT id_proveedor, nombre, contacto, telefono, email, activo " +
                 "  FROM proveedores WHERE id_proveedor = ?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapear(rs) : null;
@@ -42,8 +43,8 @@ public class ProveedorDAOImpl implements IProvedorDAO {
     public int insertar(Proveedor p) {
         String sql = "INSERT INTO proveedores (nombre, contacto, telefono, email) " +
                 "VALUES (?, ?, ?, ?)";
-        try (PreparedStatement ps = DatabaseConnection.get()
-                .prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, p.getNombre());
             ps.setString(2, p.getContacto());
             ps.setString(3, p.getTelefono());
@@ -61,7 +62,8 @@ public class ProveedorDAOImpl implements IProvedorDAO {
     public boolean actualizar(Proveedor p) {
         String sql = "UPDATE proveedores SET nombre=?, contacto=?, telefono=?, email=? " +
                 "WHERE id_proveedor=?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, p.getNombre());
             ps.setString(2, p.getContacto());
             ps.setString(3, p.getTelefono());
@@ -75,9 +77,9 @@ public class ProveedorDAOImpl implements IProvedorDAO {
 
     @Override
     public boolean eliminar(int id) {
-        // Soft delete para no romper la FK con productos
         String sql = "UPDATE proveedores SET activo = 0 WHERE id_proveedor = ?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -89,7 +91,8 @@ public class ProveedorDAOImpl implements IProvedorDAO {
     public Proveedor buscarPorNombre(String nombre) {
         String sql = "SELECT id_proveedor, nombre, contacto, telefono, email, activo " +
                 "  FROM proveedores WHERE nombre = ? LIMIT 1";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapear(rs) : null;
@@ -101,7 +104,8 @@ public class ProveedorDAOImpl implements IProvedorDAO {
 
     private List<Proveedor> ejecutar(String sql, String param) {
         List<Proveedor> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             if (param != null) ps.setString(1, param);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapear(rs));

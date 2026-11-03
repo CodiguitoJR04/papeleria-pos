@@ -4,10 +4,7 @@ import org.papeleria_pos.config.DatabaseConnection;
 import org.papeleria_pos.dao.Interface.IUsuarioDAO;
 import org.papeleria_pos.dto.UsuarioResumen;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -15,8 +12,7 @@ import java.util.List;
 
 public class UsuarioDAOImpl implements IUsuarioDAO {
 
-    private static final DateTimeFormatter FMT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public List<UsuarioResumen> listarTodos() {
@@ -25,7 +21,6 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
 
     @Override
     public List<UsuarioResumen> buscar(String filtro, String rol, Boolean activo) {
-        // 🔑 Usamos la tabla real 'usuarios'
         StringBuilder sql = new StringBuilder(
                 "SELECT id_usuario AS id_user, nombre, username, rol, activo, ultimo_acceso, " +
                         "       (SELECT COUNT(*) FROM ventas v " +
@@ -43,7 +38,7 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
         }
         if (rol != null && !rol.isEmpty()) {
             sql.append(" AND rol = ? ");
-            params.add(rol.toUpperCase()); // En la BD dice ADMINISTRADOR o CAJERO
+            params.add(rol.toUpperCase());
         }
         if (activo != null) {
             sql.append(" AND activo = ? ");
@@ -52,15 +47,15 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
         sql.append(" ORDER BY nombre");
 
         List<UsuarioResumen> lista = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql.toString())) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String fechaStr = rs.getString("ultimo_acceso");
-                    LocalDateTime ultimo = fechaStr != null
-                            ? LocalDateTime.parse(fechaStr, FMT) : null;
+                    LocalDateTime ultimo = fechaStr != null ? LocalDateTime.parse(fechaStr, FMT) : null;
 
                     lista.add(new UsuarioResumen(
                             rs.getInt("id_user"),
@@ -79,16 +74,14 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
     }
 
     @Override
-    public boolean insertar(String nombre, String username, String password,
-                            String rol, boolean activo) {
-        // 🔑 INSERT en la tabla 'usuarios' con la columna 'password_hash'
-        String sql = "INSERT INTO usuarios (nombre, username, password_hash, rol, activo) " +
-                "VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+    public boolean insertar(String nombre, String username, String password, String rol, boolean activo) {
+        String sql = "INSERT INTO usuarios (nombre, username, password_hash, rol, activo) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, username);
             ps.setString(3, password);
-            ps.setString(4, rol.toUpperCase()); // 'ADMINISTRADOR' o 'CAJERO'
+            ps.setString(4, rol.toUpperCase());
             ps.setInt(5, activo ? 1 : 0);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -97,11 +90,10 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
     }
 
     @Override
-    public boolean actualizar(int id, String nombre, String username, String password,
-                              String rol, boolean activo) {
-        String sql = "UPDATE usuarios SET nombre=?, username=?, password_hash=?, rol=?, activo=? " +
-                "WHERE id_usuario=?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+    public boolean actualizar(int id, String nombre, String username, String password, String rol, boolean activo) {
+        String sql = "UPDATE usuarios SET nombre=?, username=?, password_hash=?, rol=?, activo=? WHERE id_usuario=?";
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, username);
             ps.setString(3, password);
@@ -117,7 +109,8 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
     @Override
     public boolean eliminar(int id) {
         String sql = "DELETE FROM usuarios WHERE id_usuario=?";
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -128,20 +121,23 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
     @Override
     public int contarActivos() {
         String sql = "SELECT COUNT(*) FROM usuarios WHERE activo = 1";
-        try (Statement st = DatabaseConnection.get().createStatement();
+        try (Connection conn = DatabaseConnection.get();
+             Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             return rs.next() ? rs.getInt(1) : 0;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error contando usuarios: " + e.getMessage(), e);
         }
     }
 
     @Override
     public String autenticar(String username, String password) {
-        String sql = "SELECT rol, password_hash FROM usuarios " +
-                " WHERE username = ? AND activo = 1";
+        String sqlSelect = "SELECT rol, password_hash FROM usuarios WHERE username = ? AND activo = 1";
+        String sqlUpdate = "UPDATE usuarios SET ultimo_acceso = NOW() WHERE username = ?";
 
-        try (PreparedStatement ps = DatabaseConnection.get().prepareStatement(sql)) {
+        // 🔑 FIX CRÍTICO: Usamos UNA SOLA conexión para el SELECT y el UPDATE
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sqlSelect)) {
             ps.setString(1, username);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -159,8 +155,8 @@ public class UsuarioDAOImpl implements IUsuarioDAO {
 
                 if (!ok) return null;
 
-                String upd = "UPDATE usuarios SET ultimo_acceso = NOW() WHERE username = ?";
-                try (PreparedStatement ps2 = DatabaseConnection.get().prepareStatement(upd)) {
+                // Usamos la MISMA conexión (conn) para actualizar el último acceso
+                try (PreparedStatement ps2 = conn.prepareStatement(sqlUpdate)) {
                     ps2.setString(1, username);
                     ps2.executeUpdate();
                 }
